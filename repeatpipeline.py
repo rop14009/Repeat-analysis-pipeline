@@ -14,7 +14,7 @@ time_start = time.time()
 parser = argparse.ArgumentParser(
      prog='repeatpipeline',
      usage='''python repeatpipeline.py --fasta [Name of fasta file] --name [name of genome (optional)] --path [Path to fasta file (optional)] --cpus [Number of CPU's (optional)] --repbase [Name of reference database (optional)] --pog [Percentage of genome for de novo repeat detection (optional)]''',
-     description='''This program calculates tetranucleotide frequencies of the given DNA sequences.''',
+     description='''This program is a complete pipeline for identifying and characterizing transposable elements in a given genome.''',
      epilog='''It requires numpy, matplotlib, scikit and biopython libraries for execution.''')
 parser.add_argument('--fasta', type=str, help='The query fasta file', required=True)
 parser.add_argument('--name', type=str, help='The name of genome (optional)', required=False)
