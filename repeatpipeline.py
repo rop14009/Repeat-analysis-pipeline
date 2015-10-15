@@ -160,7 +160,7 @@ with open("unknown8080.txt",'w') as xyz:
           xyz.write("%s" %(line))
 xyz.close()
 
-with open(name + "_finalrepeatclassifications.fasta",'w') as xyz:
+with open(nameofg + "_finalrepeatclassifications.fasta",'w') as xyz:
  for line2 in open("consensi.fa.classified",'r'):
    for line in open("unknown8080.txt",'r'):
         m=line.find("#")
