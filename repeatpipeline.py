@@ -21,6 +21,8 @@ parser.add_argument('--name', type=str, help='The name of genome (optional)', re
 parser.add_argument('--pog', type=int, help='Percentage of genome for de novo repeat detection, please give whole numbers (optional)', required=False)
 parser.add_argument('--path', type=str, help='Path to input files [Not needed if genome file in same directory as this script]', required=False)
 parser.add_argument('--cpus', type=int, help="Number of CPU's (optional)", required=False)
+parser.add_argument('--LTRharvest', type=int, help="Type 0 to skip running LTR harvest", required=False)
+parser.add_argument('--LTRharvestpath', type=str, help="Directory of LTR harvest path", required=False)
 parser.add_argument('--repbase', type=str, help='Reference database (from repbase) (optional)', required=False)
 args = parser.parse_args()
 
@@ -29,11 +31,21 @@ path=args.path
 nameofg=args.name
 cpus=args.cpus
 pog=args.pog
+ltrharveststatus=args.LTRharvest
+ltrharvestpath=args.LTRharvestpath
 repbasefile=args.repbase
 if path == None:
    filename5=open(filename1,"r")
 else:
    filename5=open(os.path.join(path, filename1), "r")
+
+if path == None:
+      filename6=filename1
+else:
+      if path[len(path)-1]=="/":
+                filename6=path + filename1
+      else:
+                filename6=path + "/" + filename1
 
 if nameofg == None:
    nameofg="temp"
@@ -53,13 +65,28 @@ os.system("mkdir repeatmodeler")
 os.chdir("repeatmodeler")
 if pog == None:
    if path == None:
-        os.system("BuildDatabase -name " + nameofg + " -engine ncbi " + filename1)
+        os.system("BuildDatabase -name " + nameofg + " -engine ncbi " + filename6)
    else:
-        os.system("BuildDatabase -name " + nameofg + " -engine ncbi " + path + "/" + filename1)
+        os.system("BuildDatabase -name " + nameofg + " -engine ncbi " + filename6)
    os.system("RepeatModeler -database " + nameofg + " -engine ncbi -pa " + str(cpus))
    repeatmodelertime = time.time()
    print "RepeatModeler run successful.\n Time required to run repeatmodeler is:",repeatmodelertime-time_start
 
+# Running LTR harvest
+   os.chdir("..")
+   os.system("mkdir LTRharvest")
+   os.chdir("LTRharvest")
+   if (ltrharveststatus==None) or (ltrharveststatus==1):
+      ltrharveststart=time.time()
+      if ltrharvestpath==None:
+         os.system("gt suffixerator -db " + filename6 + " -suf -lcp")
+         os.system("gt -j " + str(cpus) + " ltrharvest -index " + filename1 + " -gff3 harvest.gff")
+      else:
+         os.system(ltrharvestpath + "/" + "gt suffixerator -db " +  filename6 + " -suf -lcp")
+         os.system(ltrharvestpath + "/" + "gt -j " + str(cpus) + " ltrharvest -index " + filename1 + " -gff3 harvest.gff")
+      print " LTR harvest run successful.\n Time required to run LTR harvest is:",time.time()-ltrharveststart
+   elif ltrharveststatus==0:
+      os.mknod("LTRharvestclassifications.fasta")
 else:
    if path==None:
       filename8=open(filename1,'r')
@@ -121,14 +148,29 @@ else:
       tempset+=" "
    os.system("cat " + tempset + "> repeatmodelertrainingset.fasta")
    print "Name of database:", nameofg,"\n"
-   print "BuildDatabase -name " + nameofg + " -engine ncbi repeatmodelertrainingset.fasta"
    os.system("BuildDatabase -name " + nameofg + " -engine ncbi repeatmodelertrainingset.fasta")
    print "Database built"
    os.system("RepeatModeler -database " + nameofg + " -engine ncbi -pa " + str(cpus))
    repeatmodelertime = time.time()
    print "RepeatModeler run successful.\n Time required to run repeatmodeler is:",repeatmodelertime-time_start
 
+   # Running LTR harvest
+   os.chdir("..")
+   os.system("mkdir LTRharvest")
+   os.chdir("LTRharvest")
+   if (ltrharveststatus==None) or (ltrharveststatus==1):
+      ltrharveststart=time.time()
+      if ltrharvestpath==None:
+         os.system("gt suffixerator -db ../repeatmodeler/repeatmodelertrainingset.fasta -suf -lcp")
+         os.system("gt -j " + str(cpus) + " ltrharvest -index repeatmodelertrainingset.fasta -gff3 harvest.gff")
+      else:
+         os.system(ltrharvestpath + "/" + "gt suffixerator -db ../repeatmodeler/repeatmodelertrainingset.fasta -suf -lcp")
+         os.system(ltrharvestpath + "/" + "gt -j " + str(cpus) + " ltrharvest -index repeatmodelertrainingset.fasta -gff3 harvest.gff")
+      print " LTR harvest run successful.\n Time required to run LTR harvest is:",time.time()-ltrharveststart
+   elif ltrharveststatus==0:
+      os.mknod("LTRharvestclassifications.fasta")
    
+os.chdir("../repeatmodeler")
 status, output = commands.getstatusoutput("ls")
 
 output2=output.split(" ")
@@ -159,6 +201,8 @@ with open("unknown8080.txt",'w') as xyz:
        if float(line2[7]) > 0.8 and (int(line2[2])-int(line2[1]) >= 80): # Applying the 80/80 cut-off.
           xyz.write("%s" %(line))
 xyz.close()
+
+# Incorporating all de novo results into a combined de novo library.
 
 with open(nameofg + "_finalrepeatclassifications.fasta",'w') as xyz:
  for line2 in open("consensi.fa.classified",'r'):
