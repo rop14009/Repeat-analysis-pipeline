@@ -31,29 +31,29 @@ def modharv(filename6,filename7,filename8):
    if row.startswith(">") == True:
        m=row.find(" ")
        if m!=-1:
-         fastanames.append(row[1:].rstrip("\r\n")[:m-1])
+         fastanames.append(row[1:].replace("\n","")[:m-1])
        else:
-         fastanames.append(row[1:].rstrip("\r\n"))
+         fastanames.append(row[1:].replace("\n",""))
        #fastanames.append(row[1:])
        fastalines.append(i)
    i+=1
   fastalines.append(i)
   #print fastanames
 
-  with open("elementtemp.gff",'w') as xyz:
+  with open("element"+filename6+"temp.gff",'w') as xyz:
     for line in open(os.path.join("../repeatmasker/full", filename6), "r"):
       if "##" not in line:
          xyz.write(line)
   xyz.close()
-  with open("harvesttemp.gff",'w') as xyz:
+  with open("harvest"+filename7+"temp.gff",'w') as xyz:
     for line in open(filename7, "r"):
       if "###" not in line:
          xyz.write(line)
   xyz.close()
-  with open("elementtemp.gff",'r') as f1:
+  with open("element"+filename6+"temp.gff",'r') as f1:
         numberlines1=len(f1.readlines())
   f1.close()
-  with open("harvesttemp.gff",'r') as f2:
+  with open("harvest"+filename7+"temp.gff",'r') as f2:
         numberlines2=len(f2.readlines())
   f2.close()
   #print "numberlines1:",numberlines1,"numberlines2:",numberlines2
@@ -67,7 +67,7 @@ def modharv(filename6,filename7,filename8):
   m=-1
   strt=0
   for line1 in range(numberlines1):
-       row1=linecache.getline("elementtemp.gff",line1+1)
+       row1=linecache.getline("element"+filename6+"temp.gff",line1+1)
        row1=row1.split("\t")
        m+=1       
        if len(row1)>5:
@@ -112,7 +112,7 @@ def modharv(filename6,filename7,filename8):
   totalhh=0
   for line2 in range(numberlines2):
        m+=1
-       row2=linecache.getline("harvesttemp.gff",line2+1)  
+       row2=linecache.getline("harvest"+filename7+"temp.gff",line2+1)  
        if (row2.startswith("###")==True) or (row2.startswith("##gff-version")==True): 
            continue
        elif row2.startswith("##sequence-region")==True:
@@ -120,7 +120,7 @@ def modharv(filename6,filename7,filename8):
            seq.append(row2[3])
        elif row2.startswith("#")==True:
            row2=row2.split(" ")
-           fasta.append(row2[0][1:].rstrip("\r\n"))
+           fasta.append(row2[0][1:].replace("\n",""))
        elif row2.startswith("seq")==True:
            if strt==0:
               temp=m
@@ -159,7 +159,7 @@ def modharv(filename6,filename7,filename8):
       for item2 in uniquescaffolds1:
        j=uniquescaffolds1.index(item2)
        for i in range(int(startnums1[j])+1,int(startnums1[j+1])+1):
-         line=linecache.getline("elementtemp.gff", i)
+         line=linecache.getline("element"+filename6+"temp.gff", i)
          elements+=1  
          line3=line.split("\t")
          try:
@@ -167,9 +167,9 @@ def modharv(filename6,filename7,filename8):
               m=seq[l]
          except ValueError:
               continue
-         
-         for k in range(int(startnums2[l])+1,int(startnums2[l+1])+1): 
-           line2=linecache.getline("harvesttemp.gff", k)
+         try:
+          for k in range(int(startnums2[l])+1,int(startnums2[l+1])+1): 
+           line2=linecache.getline("harvest"+filename7+"temp.gff", k)
            #print line,fasta[l],"\n",line2
            line4=line2.split("\t")
            if (len(line3) > 5) and (len(line4) > 5):
@@ -197,7 +197,9 @@ def modharv(filename6,filename7,filename8):
              #if (int(line3[3]) < int(line4[3])) and (int(line3[4]) < int(line4[4])): # Gene
               #pqr.write("%s%s" %(line,line2))
               #sys.stdout.flush()
-              #genes+=1       
+              #genes+=1
+         except IndexError:
+              print "l:",l,'\n',"Length of startnums2:",len(startnums2),"\n","startnums2:",startnums2
   pqr.close()
   abc.close()
   ijk.close()
@@ -243,8 +245,8 @@ def modharv(filename6,filename7,filename8):
   xyz.close()
 
   # Removing files
-  os.remove("elementtemp.gff")
-  os.remove("harvesttemp.gff")
+  os.remove("element"+filename6+"temp.gff")
+  os.remove("harvest"+filename7+"temp.gff")
 
   print "No. of lines analyzed:",i,"elements:",elements,"Genes:",genes,"\n","No. of repeats identified",len(uniquermod)  
 
@@ -793,9 +795,9 @@ def elementext(filename6,filename7,speciesname):
    if row.startswith(">") == True:
        m=row.find(" ")
        if m!=-1:
-         fastanames.append(row[1:].rstrip("\r\n")[:m-1])
+         fastanames.append(row[1:].replace("\n","")[:m-1])
        else:
-         fastanames.append(row[1:].rstrip("\r\n")) 
+         fastanames.append(row[1:].replace("\n","")) 
        fastalines.append(i)
    i+=1
   fastalines.append(i)
@@ -864,7 +866,7 @@ def elementext(filename6,filename7,speciesname):
 time_start = time.time()
 parser = argparse.ArgumentParser(
      prog='repeatpipeline',
-     usage='''Usage: python repeatpipeline.py {options}
+     usage='''python repeatpipeline.py {options}
 Necessary:
 --fasta [Name of fasta file]
 Optional: 
@@ -880,7 +882,7 @@ Optional:
 --LTRharvestpath [Directory of LTR harvest path (optional)]''',
      description='''This program is a complete pipeline for identifying and characterizing transposable elements in a given genome.''',
      epilog='''It requires numpy, matplotlib, scikit and biopython libraries for execution.''')
-parser.add_argument('--fasta', type=str, help='The query fasta file', required=True)
+parser.add_argument('--fasta', type=str, help='The genome fasta file', required=True)
 parser.add_argument('--name', type=str, help='The name of genome (optional)', required=False)
 parser.add_argument('--pog', type=int, help='Percentage of genome for de novo repeat detection, please give whole numbers (optional)', required=False)
 parser.add_argument('--path', type=str, help='Path to input files [Not needed if genome file in same directory as this script]', required=False)
@@ -908,7 +910,7 @@ if path == None:
    filename5=open(filename1,"r")
 else:
    filename5=open(os.path.join(path, filename1), "r")
-
+#filename5.close()
 if path == None:
       filename6=filename1
 else:
@@ -949,30 +951,17 @@ if pog == None:
    print "RepeatModeler run successful.\n Time required to run repeatmodeler is:",repeatmodelertime-time_start
 
 else:
-   if path==None:
-      filename8=open(filename1,'r')
-   else:
-      filename8=open(os.path.join(path, filename1), "r")
-
-   if path == None:
-      filename9=filename1
-   else:
-      if path[len(path)-1]=="/": 
-         filename9=path + filename1
-      else:
-         filename9=path + "/" + filename1
-
    fastanames1=[]
    fastalines1=[]
    i=1
-   for row in filename8:
+   for row in filename5:
      if row.startswith(">") == True:
         fastanames1.append(row[1:])
         fastalines1.append(i)
      i+=1
    fastalines1.append(i)
    # Calulate total number of bases
-
+   filename5.close()
    genome=""
 
    for name in fastanames1:
@@ -980,7 +969,7 @@ else:
        entry1=fastalines1[k]
        entry2=fastalines1[k+1]
        for m in range(entry1+1,entry2):
-           genome+=linecache.getline(filename9,m)
+           genome+=linecache.getline(filename6,m)
    pieces=100 # Change this number to change the no. of pieces of the genome 
    splice=len(genome)/pieces  
    j=0
@@ -996,8 +985,8 @@ else:
              print entry1,entry2
              sequence=""
              for m in range(entry1+1,entry2):
-                 sequence+=linecache.getline(filename9,m)
-             ijk.write("%s%s\n%s\n" % (">",fastanames1[j].rstrip('\r\n'), sequence.rstrip('\r\n'))) # Making the fasta file
+                 sequence+=linecache.getline(filename6,m)
+             ijk.write("%s%s\n%s\n" % (">",fastanames1[j].replace("\n",""), sequence.replace("\n",""))) # Making the fasta file
              #print j,fastanames1[j]
              breaks+=len(sequence)
              j+=1
@@ -1106,7 +1095,47 @@ eachbin=10485760 # 10MB each bin
 numbins=int(genomefilesize)//eachbin
 numbins+=1
 
-splice=len(genome)/numbins  
+fastanames1=[]
+fastalines1=[]
+i=1
+
+if path == None:
+   filename5=open(filename1,"r")
+else:
+   filename5=open(os.path.join(path, filename1), "r")
+
+for row in filename5:
+  if row.startswith(">") == True:
+     fastanames1.append(row[1:])
+     fastalines1.append(i)
+  i+=1
+fastalines1.append(i)
+filename5.close()
+
+genome=""
+
+for name in fastanames1:
+    k=fastanames1.index(name)
+    entry1=fastalines1[k]
+    entry2=fastalines1[k+1]
+    for m in range(entry1+1,entry2):
+        genome+=linecache.getline(filename6,m)
+
+splice=len(genome)/numbins
+
+# Determining number of bins of genome required
+
+if genomefilesize<10485760:  
+   pieces=1
+elif (genomefilesize>10485760) and (genomefilesize<=104857600):
+   pieces=10
+elif (genomefilesize>104857600) and (genomefilesize<=1048576000):   
+   pieces=100
+elif (genomefilesize>1048576000) and (genomefilesize<=10485760000):
+   pieces=1000
+elif (genomefilesize>10485760000):
+   pieces=10000
+   
 j=0
 splitnames=[]
 for i in range(pieces):
@@ -1120,8 +1149,8 @@ for i in range(pieces):
              print entry1,entry2
              sequence=""
              for m in range(entry1+1,entry2):
-                 sequence+=linecache.getline(filename9,m)
-             ijk.write("%s%s\n%s\n" % (">",fastanames1[j].rstrip('\r\n'), sequence.rstrip('\r\n'))) # Making the fasta file
+                 sequence+=linecache.getline(filename6,m)
+             ijk.write("%s%s\n%s\n" % (">",fastanames1[j].replace("\n",""), sequence.replace("\n",""))) # Making the fasta file
              #print j,fastanames1[j]
              breaks+=len(sequence)
              j+=1
@@ -1132,7 +1161,7 @@ for i in range(pieces):
 for i in range(pieces):
    c = filename1 + str(i+1) + ".fa"
    if int(os.path.getsize(c))==0:
-      os.system("rm " + c)
+      os.remove(c)
       pieces-=1
 
 print "Total number of bins:",pieces
@@ -1171,9 +1200,562 @@ if minidentity==None:
 for i in range(pieces):
     comparegff(filename1 + str(i+1) + ".fa.out.gff",minlength,minidentity,repbasepath,repbasefile,resultsfolder,nameofg + "_finalrepeatclassifications.fasta") # Full-length repeats
     elementext(filename1 + str(i+1) + ".fa_final8080.gff",filename1 + str(i+1) + ".fa",nameofg)
-    os.chdir("../../LTRharvest")
-    modharv(filename1 + str(i+1) + ".fa_element.gff","harvest" + str(i+1) + ".gff",filename1 + str(i+1) + ".fa")
-    os.chdir("../repeatmasker/partial")   
+    if ltrharveststatus==1:
+       os.chdir("../../LTRharvest")
+       modharv(filename1 + str(i+1) + ".fa_element.gff","harvest" + str(i+1) + ".gff",filename1 + str(i+1) + ".fa")
+       os.chdir("../repeatmasker/partial")
+    else:
+       os.chdir("../partial")
     comparegff(filename1 + str(i+1) + ".fa.out.gff",0,0,repbasepath,repbasefile,resultsfolder,nameofg + "_finalrepeatclassifications.fasta") # (Full + partial)-length repeats
     elementext(filename1 + str(i+1) + ".fa_final0000.gff",filename1 + str(i+1) + ".fa",nameofg)
     os.chdir("../full")
+os.system("cat *.fa_final8080.gff > " + nameofg + "full_final8080.gff")
+
+os.chdir("../../LTRharvest")    
+# Looking for unknown LTR elements detected by LTR harvest
+unknownelements=[]
+if ltrharveststatus==1:
+   os.system("cat *_linked.gff > all_linked.gff")
+   with open("LTRharvesthits.txt",'w') as xyz: 
+     for line in open("all_linked.gff",'r'):
+       if "RepeatMasker" in line:
+          if "Unknown" in line:
+             line2=line.split('\t')
+             m=line2[8].find(";element=")
+             temp1=line2[8][m+9:]
+             n=line2[8].find(";family=")
+             element=temp1[:n]
+             xyz.write("%s\n" %(element))
+             unknownelements.append(element)
+   xyz.close()
+   if len(unknownelements)>0:
+    with open(nameofg + "_finalrepeatclassifications_LTRharvest.fasta",'w') as pqr:
+     for row in open(os.path.join(repeatmodelerdir, nameofg + "_finalrepeatclassifications.fasta"), "r"):
+      if row.startswith(">")==True:
+        for element in unknownelements:  
+                 hits1=re.findall('\\b' + str(element) + '\\b', row)
+                 if len(hits1)>0:
+                   row=row.replace("Unknown","LTR")
+                   break
+        pqr.write(row)  
+      else:
+        pqr.write(row)
+    pqr.close()      
+   else:
+    os.system("cp " + repeatmodelerdir + "/" + nameofg + "_finalrepeatclassifications.fasta " + nameofg + "_finalrepeatclassifications_LTRharvest.fasta")
+else:
+ os.system("cp " + repeatmodelerdir + "/" + nameofg + "_finalrepeatclassifications.fasta " + nameofg + "_finalrepeatclassifications_LTRharvest.fasta")
+
+# Its repbaseext2.py code 
+ 
+#filename1=args.gff
+#filename2=args.repbase
+#filename5=args.denovo
+#path=args.path
+#name2=args.name
+
+filename3=open(os.path.join("../repeatmasker/full", nameofg + "full_final8080.gff"), "r")
+filename4=open(os.path.join(repbasepath, repbasefile), "r")
+filename6=open(nameofg + "_finalrepeatclassifications_LTRharvest.fasta","r")
+filename9=repbasepath + repbasefile
+elements=[]
+for line in filename3:
+   line2=line.split()
+   abc=line2[8]
+   m=line.find('(')
+   n=line.find(')')
+   elements.append(abc[:m-1])
+filename3.close()
+uniqueelements=set(elements)
+uniqueelements=list(uniqueelements)
+uniqueelements=sorted(uniqueelements)  
+   
+numberlines=0
+fastanames=[]
+fastalines=[]
+i=1
+for row in filename4: # Repbase
+ if row.startswith(">") == True:
+     row2=row[1:]
+     name=row2.split()
+     fastanames.append(name[0])
+     fastalines.append(i)
+ i+=1   
+fastalines.append(i)
+filename4.close()
+print "Repbase",fastanames[:10]
+fastanames2=[]
+fastalines2=[]
+i=1
+for row in filename6: # Denovo
+ if row.startswith(">") == True:
+     row2=row[1:]
+     name=row2.split()
+     fastanames2.append(name[0])
+     fastalines2.append(i)
+ i+=1   
+fastalines2.append(i)
+filename6.close()
+print "Denovo",fastanames2[:10]
+i=-1
+total=0
+counts=0
+counts2=0
+counts3=0
+with open("library_" + nameofg + ".fasta",'w') as pqr:
+ for name in fastanames2:
+   n=fastanames2.index(name)
+   entry1=fastalines2[n]
+   entry2=fastalines2[n+1]
+   seq1=linecache.getline(nameofg + "_finalrepeatclassifications_LTRharvest.fasta",entry1)
+   a=seq1.find('#')
+   b=seq1.find('(')
+   elementname=seq1[1:a]
+   familyname=seq1[a+1:b-1]
+   if "Pt" in elementname:
+      seq2=">"+familyname+"("+elementname+")"+"[Pinus taeda]"
+   else:
+      seq2=">"+familyname+"("+elementname+")"
+   seq2=seq2.replace("/","-")
+   pqr.write("%s\n" %(seq2))
+   for m in range(entry1+1,entry2):
+      pqr.write("%s" %(linecache.getline(nameofg + "_finalrepeatclassifications_LTRharvest.fasta",m)))
+
+ for name in uniqueelements:
+  if "rnd" in name:
+   continue
+  else:
+   total+=1
+   try:
+      k=fastanames.index(name)
+      entry1=fastalines[k]
+      entry2=fastalines[k+1]
+      seq1=linecache.getline(filename9,entry1)[1:]
+      seq1=seq1.split("\t")
+      elementname=seq1[0]
+      familyname=seq1[1]
+      speciesname=seq1[2]
+      if (familyname == "Gypsy") or (familyname == "gypsy"):
+         familyname="LTR-Gypsy"
+      if (familyname == "Copia") or (familyname == "copia"):
+         familyname="LTR-Copia"
+      if (familyname == "Harbinger") or (familyname == "harbinger"):
+         familyname="DNA-Harbinger"
+      if (familyname == "Penelope") or (familyname == "penelope"):
+         familyname="DNA-Penelope"
+      if (familyname == "hAT"): 
+         familyname="DNA-hAT"      
+      if (familyname == "EnSpm"): 
+         familyname="DNA-Enspm"
+      if (familyname == "MuDR"): 
+         familyname="DNA-MuDR"            
+      seq2=">"+familyname+"-"+elementname+"-"+"["+speciesname.replace("\n","")+"]\n"    
+      seq2=seq2.replace("rnd",nameofg + "_rnd")
+      pqr.write("%s" %(seq2))
+      for m in range(entry1+1,entry2):
+         pqr.write("%s" %(linecache.getline(filename9,m)))    
+      counts3+=1
+   except ValueError:   
+      pass 
+
+print "Total no. of repbase hits:",total,len(fastanames2)
+
+
+# Machine learning starts
+
+os.system("mkdir ../ML")
+os.chdir("../ML")
+
+# Differentiatating between DNA transposons and LTR retrotransposons
+
+fastanames=[]
+fastalines=[]
+i=1
+for row in open(os.path.join("../LTRharvest", "library_" + nameofg + ".fasta"), "r"):
+ if row.startswith(">") == True:
+     fastanames.append(row[1:])
+     fastalines.append(i)
+ i+=1
+fastalines.append(i)
+
+# Getting rid of simple repeats and rRNA.       
+
+with open("itsp_" + "library_" + nameofg + ".fasta",'w') as xyz:
+ for name in fastanames:
+    if (("Satellite" in name) or ("rRNA" in name) or ("Simple_repeat" in name) or ("buffer" in name)  or ("snRNA" in name) or ("SAT" in name)):
+        pass
+    elif ("STOWAWAY" in name) or ("Sola" in name) or ("sola" in name) or ("Crypton" in name) or ("hAT" in name) or ("MuDR" in name) or ("HARB" in name) or ("EnSpm" in name) or ("Harbinger" in name) or ("harbinger" in name) or ("Helitron" in name) or ("helitron" in name) or ("DNA" in name) or ("R1" in name) or ("L1" in name) or ("LTR" in name) or ("Retro" in name) or ("SINE" in name) or ("PtCumberland" in name) or ("PtPineywoods" in name) or ("PtAppalachian" in name) or ("PtTalladega" in name) or ("PtAngelina" in name) or ("PtOzark" in name) or ("PtOuachita" in name) or ("PtBastrop" in name) or ("PtConagree" in name) or ("LINE" in name) or ("Copia" in name) or ("copia" in name) or ("COPIA" in name) or ("Gypsy" in name) or ("GYPSY" in name) or ("gypsy" in name): 
+        k=fastanames.index(name)
+        entry1=fastalines[k]
+        entry2=fastalines[k+1]
+        xyz.write("%s%s\n" %(">",name.replace("\n","")))
+        for m in range(entry1+1,entry2):
+           xyz.write("%s" %(linecache.getline("../LTRharvest/" + "library_" + nameofg + ".fasta",m).upper()))
+xyz.close()
+
+fastanames1=[]
+fastalines1=[]
+i=1
+for row in open("itsp_" + "library_" + nameofg + ".fasta",'r'):
+ if row.startswith(">") == True:
+     fastanames1.append(row[1:])
+     fastalines1.append(i)
+ i+=1
+fastalines1.append(i)
+
+tetranucleotides =('AAAAA', 'AAAAT', 'AAAAC', 'AAAAG', 'AAATA', 'AAATT', 'AAATC', 'AAATG', 'AAACA', 'AAACT', 'AAACC', 'AAACG', 'AAAGA', 'AAAGT', 'AAAGC', 'AAAGG', 'AATAA', 'AATAT', 'AATAC', 'AATAG', 'AATTA', 'AATTT', 'AATTC', 'AATTG', 'AATCA', 'AATCT', 'AATCC', 'AATCG', 'AATGA', 'AATGT', 'AATGC', 'AATGG', 'AACAA', 'AACAT', 'AACAC', 'AACAG', 'AACTA', 'AACTT', 'AACTC', 'AACTG', 'AACCA', 'AACCT', 'AACCC', 'AACCG', 'AACGA', 'AACGT', 'AACGC', 'AACGG', 'AAGAA', 'AAGAT', 'AAGAC', 'AAGAG', 'AAGTA', 'AAGTT', 'AAGTC', 'AAGTG', 'AAGCA', 'AAGCT', 'AAGCC', 'AAGCG', 'AAGGA', 'AAGGT', 'AAGGC', 'AAGGG', 'ATAAA', 'ATAAT', 'ATAAC', 'ATAAG', 'ATATA', 'ATATT', 'ATATC', 'ATATG', 'ATACA', 'ATACT', 'ATACC', 'ATACG', 'ATAGA', 'ATAGT', 'ATAGC', 'ATAGG', 'ATTAA', 'ATTAT', 'ATTAC', 'ATTAG', 'ATTTA', 'ATTTT', 'ATTTC', 'ATTTG', 'ATTCA', 'ATTCT', 'ATTCC', 'ATTCG', 'ATTGA', 'ATTGT', 'ATTGC', 'ATTGG', 'ATCAA', 'ATCAT', 'ATCAC', 'ATCAG', 'ATCTA', 'ATCTT', 'ATCTC', 'ATCTG', 'ATCCA', 'ATCCT', 'ATCCC', 'ATCCG', 'ATCGA', 'ATCGT', 'ATCGC', 'ATCGG', 'ATGAA', 'ATGAT', 'ATGAC', 'ATGAG', 'ATGTA', 'ATGTT', 'ATGTC', 'ATGTG', 'ATGCA', 'ATGCT', 'ATGCC', 'ATGCG', 'ATGGA', 'ATGGT', 'ATGGC', 'ATGGG', 'ACAAA', 'ACAAT', 'ACAAC', 'ACAAG', 'ACATA', 'ACATT', 'ACATC', 'ACATG', 'ACACA', 'ACACT', 'ACACC', 'ACACG', 'ACAGA', 'ACAGT', 'ACAGC', 'ACAGG', 'ACTAA', 'ACTAT', 'ACTAC', 'ACTAG', 'ACTTA', 'ACTTT', 'ACTTC', 'ACTTG', 'ACTCA', 'ACTCT', 'ACTCC', 'ACTCG', 'ACTGA', 'ACTGT', 'ACTGC', 'ACTGG', 'ACCAA', 'ACCAT', 'ACCAC', 'ACCAG', 'ACCTA', 'ACCTT', 'ACCTC', 'ACCTG', 'ACCCA', 'ACCCT', 'ACCCC', 'ACCCG', 'ACCGA', 'ACCGT', 'ACCGC', 'ACCGG', 'ACGAA', 'ACGAT', 'ACGAC', 'ACGAG', 'ACGTA', 'ACGTT', 'ACGTC', 'ACGTG', 'ACGCA', 'ACGCT', 'ACGCC', 'ACGCG', 'ACGGA', 'ACGGT', 'ACGGC', 'ACGGG', 'AGAAA', 'AGAAT', 'AGAAC', 'AGAAG', 'AGATA', 'AGATT', 'AGATC', 'AGATG', 'AGACA', 'AGACT', 'AGACC', 'AGACG', 'AGAGA', 'AGAGT', 'AGAGC', 'AGAGG', 'AGTAA', 'AGTAT', 'AGTAC', 'AGTAG', 'AGTTA', 'AGTTT', 'AGTTC', 'AGTTG', 'AGTCA', 'AGTCT', 'AGTCC', 'AGTCG', 'AGTGA', 'AGTGT', 'AGTGC', 'AGTGG', 'AGCAA', 'AGCAT', 'AGCAC', 'AGCAG', 'AGCTA', 'AGCTT', 'AGCTC', 'AGCTG', 'AGCCA', 'AGCCT', 'AGCCC', 'AGCCG', 'AGCGA', 'AGCGT', 'AGCGC', 'AGCGG', 'AGGAA', 'AGGAT', 'AGGAC', 'AGGAG', 'AGGTA', 'AGGTT', 'AGGTC', 'AGGTG', 'AGGCA', 'AGGCT', 'AGGCC', 'AGGCG', 'AGGGA', 'AGGGT', 'AGGGC', 'AGGGG', 'TAAAA', 'TAAAT', 'TAAAC', 'TAAAG', 'TAATA', 'TAATT', 'TAATC', 'TAATG', 'TAACA', 'TAACT', 'TAACC', 'TAACG', 'TAAGA', 'TAAGT', 'TAAGC', 'TAAGG', 'TATAA', 'TATAT', 'TATAC', 'TATAG', 'TATTA', 'TATTT', 'TATTC', 'TATTG', 'TATCA', 'TATCT', 'TATCC', 'TATCG', 'TATGA', 'TATGT', 'TATGC', 'TATGG', 'TACAA', 'TACAT', 'TACAC', 'TACAG', 'TACTA', 'TACTT', 'TACTC', 'TACTG', 'TACCA', 'TACCT', 'TACCC', 'TACCG', 'TACGA', 'TACGT', 'TACGC', 'TACGG', 'TAGAA', 'TAGAT', 'TAGAC', 'TAGAG', 'TAGTA', 'TAGTT', 'TAGTC', 'TAGTG', 'TAGCA', 'TAGCT', 'TAGCC', 'TAGCG', 'TAGGA', 'TAGGT', 'TAGGC', 'TAGGG', 'TTAAA', 'TTAAT', 'TTAAC', 'TTAAG', 'TTATA', 'TTATT', 'TTATC', 'TTATG', 'TTACA', 'TTACT', 'TTACC', 'TTACG', 'TTAGA', 'TTAGT', 'TTAGC', 'TTAGG', 'TTTAA', 'TTTAT', 'TTTAC', 'TTTAG', 'TTTTA', 'TTTTT', 'TTTTC', 'TTTTG', 'TTTCA', 'TTTCT', 'TTTCC', 'TTTCG', 'TTTGA', 'TTTGT', 'TTTGC', 'TTTGG', 'TTCAA', 'TTCAT', 'TTCAC', 'TTCAG', 'TTCTA', 'TTCTT', 'TTCTC', 'TTCTG', 'TTCCA', 'TTCCT', 'TTCCC', 'TTCCG', 'TTCGA', 'TTCGT', 'TTCGC', 'TTCGG', 'TTGAA', 'TTGAT', 'TTGAC', 'TTGAG', 'TTGTA', 'TTGTT', 'TTGTC', 'TTGTG', 'TTGCA', 'TTGCT', 'TTGCC', 'TTGCG', 'TTGGA', 'TTGGT', 'TTGGC', 'TTGGG', 'TCAAA', 'TCAAT', 'TCAAC', 'TCAAG', 'TCATA', 'TCATT', 'TCATC', 'TCATG', 'TCACA', 'TCACT', 'TCACC', 'TCACG', 'TCAGA', 'TCAGT', 'TCAGC', 'TCAGG', 'TCTAA', 'TCTAT', 'TCTAC', 'TCTAG', 'TCTTA', 'TCTTT', 'TCTTC', 'TCTTG', 'TCTCA', 'TCTCT', 'TCTCC', 'TCTCG', 'TCTGA', 'TCTGT', 'TCTGC', 'TCTGG', 'TCCAA', 'TCCAT', 'TCCAC', 'TCCAG', 'TCCTA', 'TCCTT', 'TCCTC', 'TCCTG', 'TCCCA', 'TCCCT', 'TCCCC', 'TCCCG', 'TCCGA', 'TCCGT', 'TCCGC', 'TCCGG', 'TCGAA', 'TCGAT', 'TCGAC', 'TCGAG', 'TCGTA', 'TCGTT', 'TCGTC', 'TCGTG', 'TCGCA', 'TCGCT', 'TCGCC', 'TCGCG', 'TCGGA', 'TCGGT', 'TCGGC', 'TCGGG', 'TGAAA', 'TGAAT', 'TGAAC', 'TGAAG', 'TGATA', 'TGATT', 'TGATC', 'TGATG', 'TGACA', 'TGACT', 'TGACC', 'TGACG', 'TGAGA', 'TGAGT', 'TGAGC', 'TGAGG', 'TGTAA', 'TGTAT', 'TGTAC', 'TGTAG', 'TGTTA', 'TGTTT', 'TGTTC', 'TGTTG', 'TGTCA', 'TGTCT', 'TGTCC', 'TGTCG', 'TGTGA', 'TGTGT', 'TGTGC', 'TGTGG', 'TGCAA', 'TGCAT', 'TGCAC', 'TGCAG', 'TGCTA', 'TGCTT', 'TGCTC', 'TGCTG', 'TGCCA', 'TGCCT', 'TGCCC', 'TGCCG', 'TGCGA', 'TGCGT', 'TGCGC', 'TGCGG', 'TGGAA', 'TGGAT', 'TGGAC', 'TGGAG', 'TGGTA', 'TGGTT', 'TGGTC', 'TGGTG', 'TGGCA', 'TGGCT', 'TGGCC', 'TGGCG', 'TGGGA', 'TGGGT', 'TGGGC', 'TGGGG', 'CAAAA', 'CAAAT', 'CAAAC', 'CAAAG', 'CAATA', 'CAATT', 'CAATC', 'CAATG', 'CAACA', 'CAACT', 'CAACC', 'CAACG', 'CAAGA', 'CAAGT', 'CAAGC', 'CAAGG', 'CATAA', 'CATAT', 'CATAC', 'CATAG', 'CATTA', 'CATTT', 'CATTC', 'CATTG', 'CATCA', 'CATCT', 'CATCC', 'CATCG', 'CATGA', 'CATGT', 'CATGC', 'CATGG', 'CACAA', 'CACAT', 'CACAC', 'CACAG', 'CACTA', 'CACTT', 'CACTC', 'CACTG', 'CACCA', 'CACCT', 'CACCC', 'CACCG', 'CACGA', 'CACGT', 'CACGC', 'CACGG', 'CAGAA', 'CAGAT', 'CAGAC', 'CAGAG', 'CAGTA', 'CAGTT', 'CAGTC', 'CAGTG', 'CAGCA', 'CAGCT', 'CAGCC', 'CAGCG', 'CAGGA', 'CAGGT', 'CAGGC', 'CAGGG', 'CTAAA', 'CTAAT', 'CTAAC', 'CTAAG', 'CTATA', 'CTATT', 'CTATC', 'CTATG', 'CTACA', 'CTACT', 'CTACC', 'CTACG', 'CTAGA', 'CTAGT', 'CTAGC', 'CTAGG', 'CTTAA', 'CTTAT', 'CTTAC', 'CTTAG', 'CTTTA', 'CTTTT', 'CTTTC', 'CTTTG', 'CTTCA', 'CTTCT', 'CTTCC', 'CTTCG', 'CTTGA', 'CTTGT', 'CTTGC', 'CTTGG', 'CTCAA', 'CTCAT', 'CTCAC', 'CTCAG', 'CTCTA', 'CTCTT', 'CTCTC', 'CTCTG', 'CTCCA', 'CTCCT', 'CTCCC', 'CTCCG', 'CTCGA', 'CTCGT', 'CTCGC', 'CTCGG', 'CTGAA', 'CTGAT', 'CTGAC', 'CTGAG', 'CTGTA', 'CTGTT', 'CTGTC', 'CTGTG', 'CTGCA', 'CTGCT', 'CTGCC', 'CTGCG', 'CTGGA', 'CTGGT', 'CTGGC', 'CTGGG', 'CCAAA', 'CCAAT', 'CCAAC', 'CCAAG', 'CCATA', 'CCATT', 'CCATC', 'CCATG', 'CCACA', 'CCACT', 'CCACC', 'CCACG', 'CCAGA', 'CCAGT', 'CCAGC', 'CCAGG', 'CCTAA', 'CCTAT', 'CCTAC', 'CCTAG', 'CCTTA', 'CCTTT', 'CCTTC', 'CCTTG', 'CCTCA', 'CCTCT', 'CCTCC', 'CCTCG', 'CCTGA', 'CCTGT', 'CCTGC', 'CCTGG', 'CCCAA', 'CCCAT', 'CCCAC', 'CCCAG', 'CCCTA', 'CCCTT', 'CCCTC', 'CCCTG', 'CCCCA', 'CCCCT', 'CCCCC', 'CCCCG', 'CCCGA', 'CCCGT', 'CCCGC', 'CCCGG', 'CCGAA', 'CCGAT', 'CCGAC', 'CCGAG', 'CCGTA', 'CCGTT', 'CCGTC', 'CCGTG', 'CCGCA', 'CCGCT', 'CCGCC', 'CCGCG', 'CCGGA', 'CCGGT', 'CCGGC', 'CCGGG', 'CGAAA', 'CGAAT', 'CGAAC', 'CGAAG', 'CGATA', 'CGATT', 'CGATC', 'CGATG', 'CGACA', 'CGACT', 'CGACC', 'CGACG', 'CGAGA', 'CGAGT', 'CGAGC', 'CGAGG', 'CGTAA', 'CGTAT', 'CGTAC', 'CGTAG', 'CGTTA', 'CGTTT', 'CGTTC', 'CGTTG', 'CGTCA', 'CGTCT', 'CGTCC', 'CGTCG', 'CGTGA', 'CGTGT', 'CGTGC', 'CGTGG', 'CGCAA', 'CGCAT', 'CGCAC', 'CGCAG', 'CGCTA', 'CGCTT', 'CGCTC', 'CGCTG', 'CGCCA', 'CGCCT', 'CGCCC', 'CGCCG', 'CGCGA', 'CGCGT', 'CGCGC', 'CGCGG', 'CGGAA', 'CGGAT', 'CGGAC', 'CGGAG', 'CGGTA', 'CGGTT', 'CGGTC', 'CGGTG', 'CGGCA', 'CGGCT', 'CGGCC', 'CGGCG', 'CGGGA', 'CGGGT', 'CGGGC', 'CGGGG', 'GAAAA', 'GAAAT', 'GAAAC', 'GAAAG', 'GAATA', 'GAATT', 'GAATC', 'GAATG', 'GAACA', 'GAACT', 'GAACC', 'GAACG', 'GAAGA', 'GAAGT', 'GAAGC', 'GAAGG', 'GATAA', 'GATAT', 'GATAC', 'GATAG', 'GATTA', 'GATTT', 'GATTC', 'GATTG', 'GATCA', 'GATCT', 'GATCC', 'GATCG', 'GATGA', 'GATGT', 'GATGC', 'GATGG', 'GACAA', 'GACAT', 'GACAC', 'GACAG', 'GACTA', 'GACTT', 'GACTC', 'GACTG', 'GACCA', 'GACCT', 'GACCC', 'GACCG', 'GACGA', 'GACGT', 'GACGC', 'GACGG', 'GAGAA', 'GAGAT', 'GAGAC', 'GAGAG', 'GAGTA', 'GAGTT', 'GAGTC', 'GAGTG', 'GAGCA', 'GAGCT', 'GAGCC', 'GAGCG', 'GAGGA', 'GAGGT', 'GAGGC', 'GAGGG', 'GTAAA', 'GTAAT', 'GTAAC', 'GTAAG', 'GTATA', 'GTATT', 'GTATC', 'GTATG', 'GTACA', 'GTACT', 'GTACC', 'GTACG', 'GTAGA', 'GTAGT', 'GTAGC', 'GTAGG', 'GTTAA', 'GTTAT', 'GTTAC', 'GTTAG', 'GTTTA', 'GTTTT', 'GTTTC', 'GTTTG', 'GTTCA', 'GTTCT', 'GTTCC', 'GTTCG', 'GTTGA', 'GTTGT', 'GTTGC', 'GTTGG', 'GTCAA', 'GTCAT', 'GTCAC', 'GTCAG', 'GTCTA', 'GTCTT', 'GTCTC', 'GTCTG', 'GTCCA', 'GTCCT', 'GTCCC', 'GTCCG', 'GTCGA', 'GTCGT', 'GTCGC', 'GTCGG', 'GTGAA', 'GTGAT', 'GTGAC', 'GTGAG', 'GTGTA', 'GTGTT', 'GTGTC', 'GTGTG', 'GTGCA', 'GTGCT', 'GTGCC', 'GTGCG', 'GTGGA', 'GTGGT', 'GTGGC', 'GTGGG', 'GCAAA', 'GCAAT', 'GCAAC', 'GCAAG', 'GCATA', 'GCATT', 'GCATC', 'GCATG', 'GCACA', 'GCACT', 'GCACC', 'GCACG', 'GCAGA', 'GCAGT', 'GCAGC', 'GCAGG', 'GCTAA', 'GCTAT', 'GCTAC', 'GCTAG', 'GCTTA', 'GCTTT', 'GCTTC', 'GCTTG', 'GCTCA', 'GCTCT', 'GCTCC', 'GCTCG', 'GCTGA', 'GCTGT', 'GCTGC', 'GCTGG', 'GCCAA', 'GCCAT', 'GCCAC', 'GCCAG', 'GCCTA', 'GCCTT', 'GCCTC', 'GCCTG', 'GCCCA', 'GCCCT', 'GCCCC', 'GCCCG', 'GCCGA', 'GCCGT', 'GCCGC', 'GCCGG', 'GCGAA', 'GCGAT', 'GCGAC', 'GCGAG', 'GCGTA', 'GCGTT', 'GCGTC', 'GCGTG', 'GCGCA', 'GCGCT', 'GCGCC', 'GCGCG', 'GCGGA', 'GCGGT', 'GCGGC', 'GCGGG', 'GGAAA', 'GGAAT', 'GGAAC', 'GGAAG', 'GGATA', 'GGATT', 'GGATC', 'GGATG', 'GGACA', 'GGACT', 'GGACC', 'GGACG', 'GGAGA', 'GGAGT', 'GGAGC', 'GGAGG', 'GGTAA', 'GGTAT', 'GGTAC', 'GGTAG', 'GGTTA', 'GGTTT', 'GGTTC', 'GGTTG', 'GGTCA', 'GGTCT', 'GGTCC', 'GGTCG', 'GGTGA', 'GGTGT', 'GGTGC', 'GGTGG', 'GGCAA', 'GGCAT', 'GGCAC', 'GGCAG', 'GGCTA', 'GGCTT', 'GGCTC', 'GGCTG', 'GGCCA', 'GGCCT', 'GGCCC', 'GGCCG', 'GGCGA', 'GGCGT', 'GGCGC', 'GGCGG', 'GGGAA', 'GGGAT', 'GGGAC', 'GGGAG', 'GGGTA', 'GGGTT', 'GGGTC', 'GGGTG', 'GGGCA', 'GGGCT', 'GGGCC', 'GGGCG', 'GGGGA', 'GGGGT', 'GGGGC', 'GGGGG')
+i=-1
+retro=0
+DNA=0
+gypsy=0
+copia=0
+LINE=0
+SINE=0
+L1=0
+R1=0
+with open("unknowns.fasta",'w') as pqr:
+ with open("knowns.fasta",'w') as xyz:
+  for name in fastanames1:
+    k=fastanames1.index(name)
+    entry1=fastalines1[k]
+    entry2=fastalines1[k+1]
+    fastaseq=""
+    for m in range(entry1+1,entry2):
+      fastaseq+=linecache.getline("itsp_" + "library_" + nameofg + ".fasta",m)
+    if ("Unknown" not in name):
+      xyz.write("%s%s\n%s\n" %(">",name,fastaseq))
+    else:
+      pqr.write("%s%s\n%s\n" %(">",name,fastaseq))
+xyz.close()
+pqr.close()
+
+fastanames2=[]
+fastalines2=[]
+i=1
+q=0
+for row in open("knowns.fasta",'r'):
+  if row.startswith(">") == True:
+        fastanames2.append(row[1:])
+        fastalines2.append(i)
+        q+=1
+  i+=1
+fastalines2.append(i)
+print "No. of known sequences:",q              
+
+for name in fastanames2:
+    k=fastanames2.index(name)
+    entry1=fastalines2[k]
+    entry2=fastalines2[k+1]
+    i+=1
+    dnaseq=""
+    for m in range(entry1+1,entry2):
+      dnaseq+=linecache.getline("knowns.fasta",m)
+    #querynames.append(seq_record.id)
+    if ("Gypsy" in name) or ("gypsy" in name) or ("GYPSY" in name) or ("PtAppalachian" in name) or ("PtTalladega" in name) or ("PtAngelina" in name) or ("PtOzark" in name) or ("PtOuachita" in name) or ("PtBastrop" in name):
+       gypsy+=1
+       retro+=1
+    elif ("Copia" in name) or ("copia" in name) or ("COPIA" in name) or ("PtCumberland" in name) or ("PtConagree" in name) or ("PtPineywoods" in name):
+       copia+=1
+       retro+=1
+    elif "LINE" in name:
+       LINE+=1
+       retro+=1
+    elif ("retro" in name) or ("Retro" in name):
+       retro+=1       
+    elif "SINE" in name:
+       SINE+=1
+       retro+=1
+    elif "LTR" in name:
+       retro+=1
+    elif "L1" in name:
+       retro+=1
+       LINE+=1
+       L1+=1
+    elif "R1" in name:
+       retro+=1
+       LINE+=1
+       R1+=1
+    elif "DNA" in name:
+       DNA+=1
+    elif ("Helitron" in name) or ("helitron" in name):
+       DNA+=1
+    elif ("Harbinger" in name) or ("harbinger" in name) or ("HARB" in name):
+       DNA+=1
+    elif ("EnSpm" in name):
+       DNA+=1
+    elif ("hAT" in name):
+       DNA+=1
+    elif ("MuDR" in name):
+       DNA+=1
+    elif ("Sola" in name) or ("sola" in name):
+       DNA+=1   
+    elif ("STOWAWAY" in name):
+       DNA+=1
+    elif ("Crypton" in name):
+       DNA+=1
+    else:
+       DNA+=1
+       print name
+print "Total number of DNA elements:",DNA
+print "Total number of retro elements:",retro
+print "Gypsy:",gypsy," Copia:",copia," LINE:",LINE," SINE:",SINE," L1:",L1," R1:",R1
+check=np.zeros(len(fastanames2))
+dnano=0
+ltrno=0
+nonltrno=0
+
+# Selects 2/3rd of known repeat sequences as query dataset
+if DNA > retro:
+   querycutoff=retro
+if retro >= DNA:   
+   querycutoff=DNA
+with open("querydataset.fa",'w') as xyz:
+    j=0
+    m=-1
+    for name in fastanames2:
+       k=fastanames2.index(name)
+       entry1=fastalines2[k]
+       entry2=fastalines2[k+1]
+       dnaseq=""
+       m+=1
+       for n in range(entry1+1,entry2):
+           dnaseq+=linecache.getline("knowns.fasta",n)     
+       if (("DNA" in name) or ("Helitron" in name) or ("helitron" in name) or ("Harbinger" in name) or ("harbinger" in name) or ("HARB" in name) or ("EnSpm" in name) or ("hAT" in name) or ("MuDR" in name) or ("Sola" in name) or ("sola" in name) or ("STOWAWAY" in name) or ("Crypton" in name)) and j<(querycutoff*2)/3: #
+         check[m]=1
+         j+=1
+         dnano+=1
+         xyz.write("%s%s\n%s\n" %(">",name,dnaseq))
+    j=0
+    s=0
+    m=-1
+    for name in fastanames2:
+       k=fastanames2.index(name)
+       entry1=fastalines2[k]
+       entry2=fastalines2[k+1]
+       dnaseq=""
+       m+=1
+       for n in range(entry1+1,entry2):
+           dnaseq+=linecache.getline("knowns.fasta",n)     
+       if (("Gypsy" in name) or ("gypsy" in name) or ("GYPSY" in name) or ("PtAppalachian" in name) or ("PtTalladega" in name) or ("PtAngelina" in name) or ("PtOzark" in name) or ("PtOuachita" in name) or ("PtBastrop" in name) or ("Copia" in name) or ("copia" in name) or ("COPIA" in name) or ("PtCumberland" in name) or ("PtConagree" in name) or ("PtPineywoods" in name) or ("LTR" in name)) and j<(querycutoff*2)/6:
+         check[m]=1
+         j+=1
+         ltrno+=1
+         xyz.write("%s%s\n%s\n" %(">",name,dnaseq))
+       if (("LINE" in name) or ("SINE" in name) or ("L1" in name) or ("R1" in name)) and s<(querycutoff*2)/6:
+         check[m]=1
+         s+=1
+         nonltrno+=1
+         xyz.write("%s%s\n%s\n" %(">",name,dnaseq))
+xyz.close()
+print "Number of DNA elements in query dataset:",dnano
+print "Number of LTR elements in query dataset:",ltrno
+print "Number of non-LTR elements in query dataset:",s
+countcheck=Counter(check)
+print "Length of query dataset according to check:",countcheck[1]
+with open("referencedataset.fa",'w') as xyz:
+ j=0
+ for m in check:
+    if int(m)==0:
+      name=fastanames2[j]
+      entry1=fastalines2[j]
+      entry2=fastalines2[j+1]
+      dnaseq=""
+      for n in range(entry1+1,entry2):
+          dnaseq+=linecache.getline("knowns.fasta",n)      
+      xyz.write("%s%s\n%s\n" %(">",name,dnaseq))
+      j+=1
+xyz.close()
+print "No. of reference sequences:",j
+
+fastanames3=[]
+fastalines3=[]
+i=1
+for row in open("querydataset.fa",'r'): # Can give all_plantupdated.ref
+  if row.startswith(">") == True:
+        fastanames3.append(row[1:])
+        fastalines3.append(i)
+  i+=1
+fastalines3.append(i)
+
+fastanames4=[]
+fastalines4=[]
+i=1
+for row in open("referencedataset.fa",'r'):
+  if row.startswith(">") == True:
+        fastanames4.append(row[1:])
+        fastalines4.append(i)
+  i+=1
+fastalines4.append(i)
+
+i=-1
+print "Length of query dataset is:",len(fastanames3)
+querydata=np.zeros((1024,len(fastanames3)))  # 4096 for hexanucleotides
+querynames=[]  
+for name in fastanames3:
+    k=fastanames3.index(name)
+    entry1=fastalines3[k]
+    entry2=fastalines3[k+1]
+    dnaseq=""
+    for n in range(entry1+1,entry2):
+       dnaseq+=linecache.getline("querydataset.fa",n)    
+    i+=1
+    if ("Gypsy" in name) or ("gypsy" in name) or ("GYPSY" in name):
+       querynames.append("Retro")
+    elif ("Copia" in name) or ("copia" in name) or ("COPIA" in name):
+       querynames.append("Retro")
+    elif "LINE" in name:
+       querynames.append("Retro")
+    elif ("PtCumberland" in name) or ("PtPineywoods" in name) or ("PtAppalachian" in name) or ("PtTalladega" in name) or ("PtAngelina" in name) or ("PtOzark" in name) or ("PtOuachita" in name) or ("PtBastrop" in name) or ("PtConagree" in name):
+       querynames.append("Retro")       
+    elif "SINE" in name:
+       querynames.append("Retro")
+    elif ("LTR" in name) or ("Retro" in name):
+       querynames.append("Retro")
+    elif "L1" in name:
+       querynames.append("Retro")
+    elif "R1" in name:
+       querynames.append("Retro")
+    elif "DNA" in name:
+       querynames.append("DNA")
+    elif ("Helitron" in name) or ("helitron" in name):
+       querynames.append("DNA")
+    elif ("Harbinger" in name) or ("harbinger" in name):
+       querynames.append("DNA")
+    elif ("EnSpm" in name):
+       querynames.append("DNA")
+    elif ("HARB" in name):
+       querynames.append("DNA")       
+    elif ("MuDR" in name):
+       querynames.append("DNA")
+    elif ("hAT" in name):
+       querynames.append("DNA")
+    elif ("Crypton" in name):
+       querynames.append("DNA")       
+    elif ("Sola" in name) or ("sola" in name):
+       querynames.append("DNA")   
+    elif ("STOWAWAY" in name):
+       querynames.append("DNA")
+    else:
+       querynames.append("DNA")
+       print "Exceptions:",name    
+    j=-1
+    for nuc in tetranucleotides:
+        j+=1
+        try:
+          querydata[j,i]=dnaseq.count(nuc) # Calculating tetranucleotide frequency
+        except IndexError:
+          print j,i
+querydata=np.transpose(querydata)
+print "Query data is:",querydata
+print "Query name is:",querynames
+
+referencedata=np.zeros((1024,len(fastanames4))) # 4096 for hexanucleotides
+referencenames=[]
+i=-1
+for name in fastanames4:
+    k=fastanames4.index(name)
+    entry1=fastalines4[k]
+    entry2=fastalines4[k+1]
+    dnaseq=""
+    for n in range(entry1+1,entry2):
+       dnaseq+=linecache.getline("referencedataset.fa",n) 
+    i+=1
+    if ("Gypsy" in name) or ("gypsy" in name) or ("GYPSY" in name):
+       referencenames.append("Retro")
+    elif ("Copia" in name) or ("copia" in name) or ("COPIA" in name):
+       referencenames.append("Retro")
+    elif "LINE" in name:
+       referencenames.append("Retro")
+    elif ("PtCumberland" in name) or ("PtPineywoods" in name) or ("PtAppalachian" in name) or ("PtTalladega" in name) or ("PtAngelina" in name) or ("PtOzark" in name) or ("PtOuachita" in name) or ("PtBastrop" in name) or ("PtConagree" in name):
+       referencenames.append("Retro")       
+    elif "SINE" in name:
+       referencenames.append("Retro")
+    elif ("LTR" in name) or ("Retro" in name):
+       referencenames.append("Retro")
+    elif "L1" in name:
+       referencenames.append("Retro")
+    elif "R1" in name:
+       referencenames.append("Retro")
+    elif "DNA" in name:
+       referencenames.append("DNA")
+    elif ("Helitron" in name) or ("helitron" in name):
+       referencenames.append("DNA")
+    elif ("Harbinger" in name) or ("harbinger" in name):
+       referencenames.append("DNA")
+    elif ("EnSpm" in name):
+       referencenames.append("DNA")
+    elif ("HARB" in name):
+       referencenames.append("DNA")       
+    elif ("MuDR" in name):
+       referencenames.append("DNA")
+    elif ("hAT" in name):
+       referencenames.append("DNA")
+    elif ("Crypton" in name):
+       referencenames.append("DNA")       
+    elif ("Sola" in name) or ("sola" in name):
+       referencenames.append("DNA")
+    else:
+       referencenames.append("DNA")
+       print "Exceptions:",name    
+    j=-1
+    for nuc in tetranucleotides:
+        j+=1
+        referencedata[j,i]=dnaseq.count(nuc) # Calculating tetranucleotide frequency
+referencedata=np.transpose(referencedata)
+print "Reference data is:",referencedata
+
+# Validating datasets
+
+clf = svm.SVC(gamma=0.0070, C=5)
+clf.fit(querydata, querynames)
+referencepredict=clf.predict(referencedata)
+print "Confusion matrix for DNA/LTR retrotransposon is:",confusion_matrix(referencenames, referencepredict)
+print "Accuracy for DNA/LTR retrotransposon is:", accuracy_score(referencenames, referencepredict)
+
+# Starting predictions of unknowns
+
+fastanames4=[]
+fastalines4=[]
+i=1
+for row in open("unknowns.fasta",'r'):
+  if row.startswith(">") == True:
+        fastanames4.append(row[1:])
+        fastalines4.append(i)
+  i+=1
+fastalines4.append(i)
+
+referencedata=np.zeros((1024,len(fastanames4))) # 4096 for hexanucleotides
+i=-1
+for name in fastanames4:
+    k=fastanames4.index(name)
+    entry1=fastalines4[k]
+    entry2=fastalines4[k+1]
+    dnaseq=""
+    for n in range(entry1+1,entry2):
+       dnaseq+=linecache.getline("unknowns.fasta",n) 
+    i+=1
+    for nuc in tetranucleotides:
+        j+=1
+        referencedata[j,i]=dnaseq.count(nuc) # Calculating tetranucleotide frequency
+referencedata=np.transpose(referencedata)
+print "Reference data is:",referencedata
+# Machine learning starts
+
+# Predicting DNA transposons and retrotransposons 
+
+clf = svm.SVC(gamma=0.0070, C=5)
+clf.fit(querydata, querynames)
+referencepredict=clf.predict(referencedata)
+repeatclassification=[[] for i in range(len(fastanames4))]
+retros=[]
+i=0
+repmods=0  #Use this variable for adding ML classifications to 'repeatclassification' list
+for repclass in referencepredict:
+    if repclass=="DNA":
+       repeatclassification[repmods]=[fastanames4[i],"DNA"]
+       repmods+=1
+    if repclass=="Retro":
+       retros.append(fastanames4[i])     
+    i+=1   
+# Removing temporary files
+#os.remove("itsp_" + "library_" + nameofg + ".fasta")
