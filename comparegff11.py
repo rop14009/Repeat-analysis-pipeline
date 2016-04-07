@@ -192,27 +192,13 @@ for seq_record in SeqIO.parse(filename15, "fasta"):
      conns.append(conn)
      items.append(imp)
 
-lenfile=0
-for line in open("repbase_" + filename1,'r'):
-   line=line.split()
-   if len(line)>0:
-     lenfile+=1
+
 reader2=np.loadtxt("repbase_" + filename1, delimiter='\t',dtype='str')
+interval=np.zeros(len(reader2))
 #print "Length of reader2:", len(reader2)
 i=0
 detectors2=[]
-if lenfile==1:
-   interval=np.zeros(1)
-   for line in open("repbase_" + filename1,'r'):
-       line=line.split("\t")
-       s=line[8]
-       s2=s[14:]
-       s3=s2.find('"')
-       detectors2.append(s2[:s3])
-       i+=1       
-else:
-   interval=np.zeros(len(reader2))
-   for row in reader2:
+for row in reader2:
        s=row[8]
        s2=s[14:]
        s3=s2.find('"')
@@ -568,12 +554,10 @@ with open(filename1[:len(filename1)-8] + "_final0000.gff",'w') as xyz:
 xyz.close()
          
 with open("output_" + filename1,'w') as xyz:
- try:  
+  xyz.write("%s%i%s" %("The number of matches between de novo and repbase:",m,"\n"))
   xyz.write("%s%i%s%s%f%s"  %("Number of de novo hits:",len(reader1),"\n","Percentage of de novo matches:",(m*100)/len(reader1),"\n"))
   xyz.write("%s%i%s%s%f%s" %("Number of repbase hits:",len(reader2),"\n","Percentage of repbase matches:",(m*100)/len(reader2),"\n"))
- except ZeroDivisionError:
-  xyz.write("%s%i\n"  %("Number of de novo hits:",len(reader1)))
-  xyz.write("%s%i\n" %("Number of repbase hits:",len(reader2)))
+
      
 xyz.close() 
 

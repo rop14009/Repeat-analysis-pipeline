@@ -19,6 +19,332 @@ from sklearn import svm
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 
+def analyzegff(filename1,length2,path,name):
+   numberlines=0   
+   if path == None:
+         filename9=filename1
+   else:
+      if path[len(path)-1]=="/":
+         filename9=path + filename1
+      else:
+         filename9=path + "/" + filename1
+   
+   if path == None:
+          filename3=open(filename1,"r")
+   else:
+          filename3=open(os.path.join(path, filename1), "r")      
+         
+   with filename3 as f:
+         numberlines=len(f.readlines())
+   f.close()
+   length=0
+   common=0
+   repbase=0
+   rep=0
+   denovo=0
+   unknown=0
+   total=0
+   gypsy=0
+   copia=0
+   enspm=0
+   L1=0
+   R1=0
+   hAT=0
+   LINE=0
+   SINE=0
+   DNA=0
+   simplerepeat=0
+   helitron=0
+   retrotransposon=0
+   mudr=0
+   penelope=0
+   satellite=0
+   rtex=0
+   unk=0
+   classified=[]
+   species=[]
+   elements=[]
+   
+   for i in range(numberlines):
+      line=linecache.getline(filename9,i+1)    
+      line2=line.split()
+      if len(line2)!=0:
+         start=int(line2[3])
+         end=int(line2[4])
+         diff=abs(end-start)
+         length+=diff
+      if "Unknown" in line:
+         unknown+=1
+         unk+=diff
+      if "Gypsy" in line:
+         gypsy+=diff
+      if "DNA" in line:
+         DNA+=diff
+      if "Copia" in line:
+         copia+=diff
+      if "EnSpm" in line:
+         enspm+=diff
+      if "[" in line:
+         rep+=diff
+      if "L1" in line:
+         L1+=diff
+      if "LINE" in line:
+         LINE+=diff
+      if "SINE" in line:
+         SINE+=diff
+      if "R1" in line:
+         R1+=diff
+      if "hAT" in line:
+         hAT+=diff
+      if "RTE-X" in line:
+         rtex+=diff
+      if "Simple_repeat" in line:
+         simplerepeat+=diff
+      if "Helitron" in line:
+         helitron+=diff
+      if "MuDR" in line:
+         mudr+=diff
+      if "Penelope" in line:
+         penelope+=diff
+      if "Satellite" in line:
+         satellite+=diff
+      if ("LTR Retrotransposon" in line) or ("(LTR)" in line):
+        if "Non-LTR Retrotransposon" not in line:
+          retrotransposon+=diff
+      if "rnd" in line2[8]: # Denovo
+         denovo+=1
+         abc=line2[8]
+         m=line.find('(')
+         n=line.find(')')
+         elements.append(abc[:m-1])
+         tempclass=line[m+1:n]
+         if "/" in tempclass:
+            q=tempclass.find('/')
+            r=len(tempclass)
+            classified.append(tempclass[q+1:r])
+         else:
+            classified.append(tempclass)
+      else: # Repbase
+         repbase+=1
+         abc=line2[8]
+         m=line.find('(')
+         n=line.find(')')
+         elements.append(abc[:m-1])
+         o=line.find('[')
+         p=line.find(']')
+         if o !=-1:
+           species.append(line[o+1:p])
+         tempclass=line[m+1:n]
+         if "/" in tempclass:
+            q=tempclass.find('/')
+            r=len(tempclass)
+            classified.append(tempclass[q+1:r])
+         else:
+            classified.append(tempclass)
+      if ("rnd" in line) and ("[" in line): # Common
+         common+=1
+         denovo+=1
+         repbase+=1
+         o=line.find('[')
+         p=line.find(']')
+         species.append(line[o+1:p])
+         abc=line2[8]
+         m=line.find('(')
+         n=line.find(')')
+         elements.append(abc[:m-1])
+         tempclass=line[m+1:n]
+         if "/" in tempclass:
+            q=tempclass.find('/')
+            r=len(tempclass)
+            classified.append(tempclass[q+1:r])
+         else:
+            classified.append(tempclass)
+         efg=abc[n+2:]
+         q=efg.find('(')
+         r=efg.find(')')
+         elements.append(efg[:q-1])
+         tempclass=efg[q+1:r]
+         if "/" in tempclass:
+            q=tempclass.find('/')
+            r=len(tempclass)
+            classified.append(tempclass[q+1:r])
+         else:
+            classified.append(tempclass)
+      total+=1
+   filename3.close()
+   uniquerepeats=set(classified)
+   uniquerepeats=list(uniquerepeats)
+   uniquerepeats=sorted(uniquerepeats)
+   print uniquerepeats
+   countrepeats=[[] for i in range(len(uniquerepeats))]
+   counts1=Counter(classified)
+   print "Total no. of elements",len(elements)
+   print "Number of lines",numberlines
+   uniqueelements=set(elements)
+   uniqueelements=list(uniqueelements)
+   uniqueelements=sorted(uniqueelements)
+   countelements=[[] for i in range(len(uniqueelements))]
+   counts2=Counter(elements)
+   
+   i=0
+   for item in uniquerepeats:
+      countrepeats[i]=[str(item),float((int(counts1[item])*100)/len(classified))]
+      i+=1 
+   
+   i=0
+   for item in uniqueelements:
+      countelements[i]=[str(item),float((int(counts2[item])*100)/len(elements)),int(counts2[item])]
+      i+=1 
+   
+   #countrepeats=np.array(countrepeats,dtype=(str,float))
+   countrepeats=np.array(countrepeats)
+   countrepeats=countrepeats[np.argsort(countrepeats[:, 1].astype(np.float32))]
+   countrepeats=countrepeats[::-1] # Reversing array
+   print countrepeats
+   
+   countelements=np.array(countelements)
+   print countelements[:, 1].astype(np.float32)
+   countelements=countelements[np.argsort(countelements[:, 1].astype(np.float32))]
+   countelements=countelements[::-1] # Reversing array
+   
+   uniquespecies=set(species)
+   uniquespecies=list(uniquespecies)
+   uniquespecies=sorted(uniquespecies)
+   countspecies=[[] for i in range(len(uniquespecies))]
+   counts2=Counter(species)
+   i=0
+   for item in uniquespecies:
+      countspecies[i]=[str(item),float((int(counts2[item])*100)/len(species))]
+      i+=1 
+   
+   countspecies=np.array(countspecies)
+   try: 
+     countspecies=countspecies[np.argsort(countspecies[:, 1].astype(np.float32))]
+     countspecies=countspecies[::-1]   # Reversing array
+     print countspecies
+   except IndexError:
+     pass
+   
+   
+   # Writing the frequency-distribution of different repeats 
+   if name == None: 
+     names="final_output2_" + filename1 + ".txt"
+   else:
+     names="final_output_" + name + ".txt"
+   
+   with open(names,'w') as xyz:
+     xyz.write("Frequency of occurence of different types of repeats:\n")
+     for i in range(len(countrepeats)):
+       xyz.write("%s\t%s\n" %(countrepeats[i,0],countrepeats[i,1])) 
+     
+     xyz.write("\n")
+   # Writing the frequency-distribution of the organismal origin of reference repbase repeats.
+     xyz.write("Frequency-distribution of the organismal origin of reference repbase repeats\n")
+     for i in range(len(countspecies)):
+       xyz.write("%s\t%s\n" %(countspecies[i,0],countspecies[i,1]))  
+     xyz.write("\n")
+       
+     if length2==None:
+        xyz.write("%s\n" %("Lengths:"))
+        xyz.write("%s\t%i\n" %("Gypsy",gypsy))
+        xyz.write("%s\t%i\n" %("Copia",copia))
+        xyz.write("%s\t%i\n" %("LTR Retrotransposon",retrotransposon))
+        xyz.write("%s\t%i\n" %("Gypsy",gypsy))
+        xyz.write("%s\t%i\n" %("Copia",copia))
+        xyz.write("%s\t%i\n" %("L1",L1))
+        xyz.write("%s\t%i\n" %("R1",R1))
+        xyz.write("%s\t%i\n" %("Unknown",unk))
+        xyz.write("%s\t%i\n" %("DNA",DNA))
+        xyz.write("%s\t%i\n" %("repbase",rep))
+        xyz.write("%s\t%i\n" %("hAT",hAT))
+        xyz.write("%s\t%i\n" %("LINE",LINE))
+        xyz.write("%s\t%i\n" %("SINE",SINE))
+        xyz.write("%s\t%i\n" %("Simple repeat",simplerepeat))
+        xyz.write("%s\t%i\n" %("Helitron",helitron))
+        xyz.write("%s\t%i\n" %("MuDR",mudr))
+        xyz.write("%s\t%i\n" %("Penelope",penelope))
+        xyz.write("%s\t%i\n" %("Satellite",satellite))
+        xyz.write("%s\t%i\n" %("RTE-X",rtex))
+     else:
+        xyz.write("%s\n" %("Percentages of each type of repeats in genome:"))
+        xyz.write("%s\t%f\n" %("Gypsy",(gypsy*100)/length2))
+        xyz.write("%s\t%f\n" %("Copia",(copia*100)/length2))
+        xyz.write("%s\t%f\n" %("LTR Retrotransposon",(retrotransposon*100)/length2))
+        xyz.write("%s\t%f\n" %("L1",(L1*100)/length2))
+        xyz.write("%s\t%f\n" %("R1",(R1*100)/length2))
+        xyz.write("%s\t%f\n" %("hAT",(hAT*100)/length2))
+        xyz.write("%s\t%f\n" %("Unknown",(unk*100)/length2))
+        xyz.write("%s\t%f\n" %("repbase",(rep*100)/length2))
+        xyz.write("%s\t%f\n" %("LINE",(LINE*100)/length2))
+        xyz.write("%s\t%f\n" %("DNA",(DNA*100)/length2))
+        xyz.write("%s\t%f\n" %("SINE",(SINE*100)/length2))
+        xyz.write("%s\t%f\n" %("Simple repeat",(simplerepeat*100)/length2))
+        xyz.write("%s\t%f\n" %("Helitron",(helitron*100)/length2))
+        xyz.write("%s\t%f\n" %("MuDR",(mudr*100)/length2))
+        xyz.write("%s\t%f\n" %("Penelope",(penelope*100)/length2))
+        xyz.write("%s\t%f\n" %("Satellite",(satellite*100)/length2))
+        xyz.write("%s\t%f\n" %("RTE-X",(rtex*100)/length2))
+     xyz.write("\n")
+     xyz.write("Statistics:\n")
+     xyz.write("%s %f\n" %("Percentage of unknown denovo hits:",(unknown*100)/total))
+     xyz.write("%s %f\n" %("Percentage of common denovo and repbase hits:",(common*100)/total))
+     xyz.write("%s %f\n" %("Percentage of denovo hits:",(denovo*100)/total))
+     xyz.write("%s %f\n" %("Percentage of repbase hits:",(repbase*100)/total))
+     xyz.write("%s %i\n" %("Total length of repeats:",length))
+     if length2 != None:
+         xyz.write("%s %f\n" %("Percentage of repeats in genome:",(length*100)/length2))        
+     xyz.write("%s\t%s\t%s" %("Element","Length","Percentage in genome (printed only if length of genome entered)"))
+     xyz.write("\n")
+     try:
+       blank=uniqueelements.index('')
+       del uniqueelements[blank]
+     except ValueError:
+       pass    
+     # Calculating length of elements
+     print "Unique elements is:",uniqueelements
+     repeatelements=[[] for i in range(len(uniqueelements))]
+     s=0
+     totallength=0
+     elements=np.array(elements)
+     p=0
+     for item in uniqueelements: 
+        p+=1
+        print "Repeat number being analyzed:",p      
+        length=0
+        elementcount=0
+        #linecounter=-1
+        ind=np.where(elements==item)
+        for item2 in ind:
+          for i in item2:
+            line=linecache.getline(filename9,i+1)
+            #linecounter+=1 
+            line2=line.split("\t")
+            start=int(line2[3])
+            end=int(line2[4])
+            diff=abs(end-start)
+            length+=diff
+            elementcount+=1
+        filename3.close()
+        totallength+=length
+        repeatelements[s]=[str(item),elementcount,int(length)]
+        s+=1
+     xyz.write("%s %i\n" %("Total calculated repeat length is:",totallength))
+     #xyz.write("%s %i\n" %("Length counted twice is:",doubles))
+     #xyz.write("%s %i\n" %("The net repeat length is:",totallength-doubles))
+     repeatelements=np.array(repeatelements)
+     repeatelements=repeatelements[np.argsort(repeatelements[:, 2].astype(np.int32))]
+     repeatelements=repeatelements[::-1]
+     for i in range(len(uniqueelements)): # Top elements by genome coverage
+        if length2 == None:
+            xyz.write("%s\t%i\t%i\n" %(str(repeatelements[i,0]),int(repeatelements[i,1]),int(repeatelements[i,2])))
+        else:
+            xyz.write("%s\t%i\t%i\t%f\n" %(str(repeatelements[i,0]),int(repeatelements[i,1]),int(repeatelements[i,2]),float((float(repeatelements[i,2])*100)/length2)))
+   
+   xyz.close()
+   
+   time_end = time.time()
+   print "Time taken to run this parser is:",time_end-time_start," seconds"   
+
 def modharv(filename6,filename7,filename8):
   #filename6="element.gff" # Repeatmodeler gff file
   #filename7="harvest.gff" # LTR harvest gff file
@@ -262,27 +588,27 @@ def comparegff(filename1,minlen,minid,reppath,repfile,classfolder,classified):
           continue
        else:
           abc.write(row)
-
+  
   # getting rid of unwanted "#" out of the alignment file
   with open("new_" + filename1 + ".align",'w') as xyz:
     for line in filename12:
           line=line.replace('#','-')
           xyz.write(line)
-
+       
   xyz.close()
-
+  
   # Parsing the repbase gff file.
-
+  
   length=0
   i=0
   detectors=[]
-
+  
   reader=np.loadtxt("all_" + filename1, delimiter='\t',dtype='str')
   reader2=np.loadtxt("new_" + filename1 + ".align", delimiter='\t',dtype='str')
   interval=np.zeros(len(reader))
   alignments=np.zeros(len(reader))
   percentidentity=np.zeros(len(reader))
-
+  
   starts=np.zeros(len(reader2)+1)
   ends=np.zeros(len(reader2))
   starts[0]=0
@@ -338,31 +664,31 @@ def comparegff(filename1,minlen,minid,reppath,repfile,classfolder,classified):
          interval[i]=diff
          length+=diff
          i+=1
-
-
+  
+  
   print "MAKE SURE ALL THE NUMBERS IN THE FOLLOWING ARRAY ARE WHOLE NUMBERS!! (CHECK THIS WHEN YOU USE THIS SCRIPT ON A NEW DATASET)"
   print alignments
-
+  
   highestidentity=np.zeros(len(alignments))
-
+  
   for i in range(len(alignments)):
-      if alignments[i]>=minlen:
+      if alignments[i]>=0:
          highestidentity[i]=percentidentity[i]
-
+  
   # Extracting repeats which obey the 80/80 rule
-
+  
   i=-1
   unknowns=0
   with open("known_" + filename1,'w') as xyz:
    with open("unknown_" + filename1,'w') as pqr:
     for line in open("all_" + filename1,'r'):
       i+=1
-      if (alignments[i] >= minlen) and (percentidentity[i] >= minid):  # Invoking the 80/80 rule
+      if (alignments[i] >= 0) and (percentidentity[i] >= 0):  # Invoking the 80/80 rule
           xyz.write("%s" %(line)) 
       else:
           pqr.write("%s" %(line))
           unknowns+=1   
-
+  
   with open("denovo_" + filename1,'w') as xyz:
     with open("repbase_" + filename1,'w') as pqr:
       for row in open("known_" + filename1,'r'):
@@ -379,11 +705,10 @@ def comparegff(filename1,minlen,minid,reppath,repfile,classfolder,classified):
           else: # Repbase hit
               row=row.replace('#','-')
               pqr.write(row) 
-
+  
   # Extracting classifications from the (classified) fasta file
   filename15=classfolder + "/" + classified
-
-
+  
   items=[]
   conns=[]
   for seq_record in SeqIO.parse(filename15, "fasta"):
@@ -393,33 +718,19 @@ def comparegff(filename1,minlen,minid,reppath,repfile,classfolder,classified):
        conn=identity[:hashh]
        conns.append(conn)
        items.append(imp)
-
-  lenfile=0
-  for line in open("repbase_" + filename1,'r'):
-     line=line.split()
-     if len(line)>0:
-       lenfile+=1
+  
+  
   reader2=np.loadtxt("repbase_" + filename1, delimiter='\t',dtype='str')
+  interval=np.zeros(len(reader2))
   #print "Length of reader2:", len(reader2)
   i=0
   detectors2=[]
-  if lenfile==1:
-     interval=np.zeros(1)
-     for line in open("repbase_" + filename1,'r'):
-         line=line.split("\t")
-         s=line[8]
-         s2=s[14:]
-         s3=s2.find('"')
-         detectors2.append(s2[:s3])
-         i+=1       
-  else:
-     interval=np.zeros(len(reader2))
-     for row in reader2:
+  for row in reader2:
          s=row[8]
          s2=s[14:]
          s3=s2.find('"')
          detectors2.append(s2[:s3])
-         i+=1
+         i+=1  
 
   counts=Counter(detectors2)
   unique=set(detectors2)
@@ -878,7 +1189,7 @@ Optional:
 --denovolibpath [Path to de novo repeat library. If not specified, it assumes the same path as for the repbase file (optional)] 
 --minlength [Minimum length to be considered as full-length] 
 --minidentity [Minimum percent identity (0 to 100) to be considered as full-length]
---minaccuracy [Minimum accuracy for machine learning results to be incorporated into final results (default value=95.0)]
+--minaccuracy [Minimum accuracy for machine learning results to be incorporated into final results (Enter value from 0 to 100, default value=95.0)]
 --repbase [Reference database (from repbase) (optional)]
 --repbasepath [Path to reference database, by default it assumes the location of this script  (optional)]
 --LTRharvest [Type 0 to skip running LTR harvest]
@@ -900,7 +1211,7 @@ parser.add_argument('--LTRharvest', type=int, help="Type 0 to skip running LTR h
 parser.add_argument('--interproscan', type=int, help="Type 0 to skip running interproscan", required=False)
 parser.add_argument('--minlength', type=int, help="Minimum length to be considered as full-length (default 80bp)", required=False)
 parser.add_argument('--minidentity', type=float, help="Minimum percent identity (0 to 100) to be considered as full-length (default 80%)", required=False)
-parser.add_argument('--minaccuracy', type=float, help="Minimum accuracy for machine learning results to be incorporated into final results (default value=95.0)", required=False)
+parser.add_argument('--minaccuracy', type=float, help="Minimum accuracy for machine learning results to be incorporated into final results (Enter value from 0 to 100, default value=95.0)", required=False)
 parser.add_argument('--LTRharvestpath', type=str, help="Path to LTR harvest (optional)", required=False)
 parser.add_argument('--interproscanpath', type=str, help="Path to interproscan (optional)", required=False)
 parser.add_argument('--getorfpath', type=str, help="Path to getorf (optional)", required=False)
@@ -1129,15 +1440,15 @@ with open(nameofg + "_finalrepeatclassifications.fasta",'w') as xyz:
      if n != -1:
         phrase2=line2[1:n]             
      for line in open("consensiunknowns.gff3",'r'):
-              line2=line.split('\t')
-              if len(line2)>6:
-                 if line2[2]=="protein_match": 
-                    repeat=line2[0]
+              line3=line.split('\t')
+              if len(line3)>6:
+                 if line3[2]=="protein_match": 
+                    repeat=line3[0]
                     m=repeat.find("Unknown")
                     if m != -1:
                        phrase1=repeat[:m]
                        if (phrase1 in phrase2) and (phrase2 in phrase1) and (m != -1) and (n != -1):                          
-                          name=line2[8]
+                          name=line3[8]
                           a=name.find(';signature_desc=')
                           annot1=name[a+16:]
                           b=annot1.find(';Target=')
@@ -1156,7 +1467,10 @@ with open(nameofg + "_finalrepeatclassifications.fasta",'w') as xyz:
                           o=line2.find("(")
                           q=line2.find(")")
                           recon=line2[o:q+1]
-                          line2=">" + phrase1 + "#" + str(clas) + " " + recon + " Interproscan" + "\n"
+                          if clas=="Unknown":
+                            line2=">" + phrase1 + "#" + str(clas) + " " + recon + "\n"
+                          else:
+                            line2=">" + phrase1 + "#" + str(clas) + " " + recon + " Interproscan" + "\n"
      for line in open("unknown8080.txt",'r'):
         m=line.find("#")        
         if m != -1:
@@ -1189,9 +1503,8 @@ with open(nameofg + "_finalrepeatclassifications.fasta",'w') as xyz:
            answer2=answer2.replace("\n","")
            o=line2.find("(")
            q=line2.find(")")
-           recon=line2[o:q+1]
-           print "CENSOR",answer2   
-           line2=">" + phrase1 + "#" + str(answer2) + " " + recon + " CENSOR" + "\n"
+           recon=line2[o:q+1]   
+           line2=">" + phrase1 + "#" + str(answer2) + " " + recon + " CENSOR" + "\n" 
      xyz.write("%s" %(line2))
    else:
      xyz.write("%s" %(line2))        
@@ -1481,6 +1794,7 @@ os.chdir("../ML")
 
 if minacc==None:
    minacc=95.0
+minacc=minacc/100
 
 # Differentiatating between DNA transposons and LTR retrotransposons
 
@@ -1858,11 +2172,23 @@ print "Confusion matrix for DNA/LTR retrotransposon is:",confusion_matrix(refere
 print "Accuracy for DNA/LTR retrotransposon is:", accuracy_score(referencenames, referencepredict)
 repmods=0  #Use this variable for adding ML classifications to 'repeatclassification' list
 
+unkretro=0
+for name in fastanamesrandom2:
+  if "Retro" in name: 
+    unkretro+=1
+print "Length of repeat classification:",len(fastanames4)+unkretro    
+repeatclassification=[[] for i in range(len(fastanames4)+unkretro)]
 if accuracy_score(referencenames, referencepredict) < minacc:
    print "Accuracy is less than minimum desired accuracy between DNA and retrotransposons:",minacc
    for repclass in referencepredict:
-     repeatclassification[repmods]=[fastanames4[i],"Unknown"]
+     try: 
+       repeatclassification[repmods]=[fastanames4[i],"Unknown"]
+     except IndexError:
+       print "List Index exceeded Unknown:",repmods+1
+       repmods+=1
+       break
      repmods+=1
+     print "repmods:",repmods     
 else: 
    # Starting predictions of unknowns
    
@@ -1898,14 +2224,18 @@ else:
    
    clf = svm.SVC(gamma=0.0070, C=5)
    clf.fit(querydata, querynames)
-   referencepredict=clf.predict(referencedata)
-   repeatclassification=[[] for i in range(len(fastanames4))]
+   referencepredict=clf.predict(referencedata)   
    retros=[]
    i=0
    with open("unknownretros.fasta",'w') as xyz:
      for repclass in referencepredict:
        if repclass=="DNA":
-          repeatclassification[repmods]=[fastanames4[i],"DNA"]
+          try:
+            repeatclassification[repmods]=[fastanames4[i],"DNA"]
+          except IndexError:
+            print "List Index exceeded DNA:",repmods+1
+            repmods+=1
+            break
           repmods+=1
        if repclass=="Retro":
           retros.append(fastanames4[i])
@@ -1917,26 +2247,31 @@ else:
           xyz.write("%s%s\n%s\n" %(">",fastanames4[i].replace("\n",""),dnaseq.replace("\n","").replace(" ","")))    
        i+=1
    xyz.close()
+   print "repmods after adding DNA/LTR:",repmods
    # Adding previously annotated retrotransposons from interproscan
+   interproretros=0
    with open("unknownretros.fasta",'a') as xyz:
       for name in fastanamesrandom2:
-         if "Retro" in name:
+         if ("Retro" in name):
+             interproretros+=1
              k=fastanamesrandom2.index(name)
              entry1=fastalinesrandom2[k]
-             entry2=fastalinesrandom2[k]
+             entry2=fastalinesrandom2[k+1]
              dnaseq=""
              for m in range(entry1+1,entry2):
                 dnaseq+=linecache.getline("knowns2.fasta",m)
              dnaseq=dnaseq.replace("\n","").replace(" ","")
              xyz.write("%s%s\n%s\n" %(">",name.replace("\n",""),dnaseq))
-   xyz.close()  
+   xyz.close()
+   print "Length of classified retros + retros from interproscan:",repmods+interproretros
    # Removing temporary files
    #os.remove("itsp_" + "library_" + nameofg + ".fasta")
    
    ### Predicting LTR's and non-LTR's
-   
+   os.system("mkdir LTRnonLTR")
+   os.chdir("LTRnonLTR")
    i=1
-   for row in open(os.path.join("../LTRharvest", "library_" + nameofg + ".fasta"), "r"):
+   for row in open(os.path.join("../../LTRharvest", "library_" + nameofg + ".fasta"), "r"):
     if row.startswith(">") == True:
         fastanames.append(row[1:])
         fastalines.append(i)
@@ -1955,7 +2290,7 @@ else:
            entry2=fastalines[k+1]
            dnaseq=""
            for m in range(entry1+1,entry2):
-               dnaseq+=linecache.getline("../LTRharvest/" + "library_" + nameofg + ".fasta",m).upper()
+               dnaseq+=linecache.getline("../../LTRharvest/" + "library_" + nameofg + ".fasta",m).upper()
            dnaseq=dnaseq.replace("\n","").replace(" ","")
            xyz.write("%s%s\n%s\n" %(">",name.replace("\n",""),dnaseq.replace("\n","").replace(" ","")))
    xyz.close()
@@ -2221,8 +2556,8 @@ else:
    clf = svm.SVC(gamma=0.0070, C=5)
    clf.fit(querydata, querynames)
    referencepredict=clf.predict(referencedata)
-   print "Confusion matrix of LTR's and non-LTR's is:",confusion_matrix(referencenames, referencepredict2)
-   print "Accuracy of LTR's and non-LTR's is:", accuracy_score(referencenames, referencepredict2)   
+   print "Confusion matrix of LTR's and non-LTR's is:",confusion_matrix(referencenames, referencepredict)
+   print "Accuracy of LTR's and non-LTR's is:", accuracy_score(referencenames, referencepredict)   
    #for i in range(len((seq_records4))):
      #print referencepredict[i],referencenames[i]
    
@@ -2234,7 +2569,7 @@ else:
    fastanames4=[]
    fastalines4=[]
    i=1
-   for row in open("unknownretros.fasta",'r'):
+   for row in open(os.path.join("../", "unknownretros.fasta"), "r"):
      if row.startswith(">") == True:
            fastanames4.append(row[1:])
            fastalines4.append(i)
@@ -2249,7 +2584,7 @@ else:
        entry2=fastalines4[k+1]
        dnaseq=""
        for n in range(entry1+1,entry2):
-          dnaseq+=linecache.getline("unknownretros.fasta",n) 
+          dnaseq+=linecache.getline("../unknownretros.fasta",n) 
        i+=1
        j=-1
        for nuc in pentanucleotides:
@@ -2260,8 +2595,13 @@ else:
 
    if accuracy_score(referencenames, referencepredict) < minacc:
       print "Accuracy is less than minimum desired accuracy between LTR and non-LTR's:",minacc
-      for repclass in referencepredict:
-        repeatclassification[repmods]=[fastanames4[i],"Retro"]
+      for name in fastanames4:
+        try: 
+          repeatclassification[repmods]=[name,"Retro"]
+        except IndexError:
+          print "List Index exceeded Retro:",repmods+1
+          repmods+=1
+          break
         repmods+=1
    else:
       # Machine learning starts
@@ -2270,7 +2610,6 @@ else:
       clf = svm.SVC(gamma=0.0070, C=5)
       clf.fit(querydata, querynames)
       referencepredict=clf.predict(referencedata)
-      repeatclassification=[[] for i in range(len(fastanames4))]
       LTRs=[]
       nonLTRs=[]
       i=0
@@ -2283,7 +2622,7 @@ else:
              entry2=fastalines4[i+1]
              dnaseq=""
              for n in range(entry1+1,entry2):
-                 dnaseq+=linecache.getline("unknownretros.fasta",n)
+                 dnaseq+=linecache.getline("../unknownretros.fasta",n)
              pqr.write("%s%s\n%s\n" %(">",fastanames4[i].replace("\n",""),dnaseq.replace("\n","").replace(" ","")))
           if repclass=="LTR":
              LTRs.append(fastanames4[i])
@@ -2291,7 +2630,7 @@ else:
              entry2=fastalines4[i+1]
              dnaseq=""
              for n in range(entry1+1,entry2):
-                 dnaseq+=linecache.getline("unknownretros.fasta",n)
+                 dnaseq+=linecache.getline("../unknownretros.fasta",n)
              dnaseq=dnaseq.replace("\n","").replace(" ","")    
              xyz.write("%s%s\n%s\n" %(">",fastanames4[i].replace("\n",""),dnaseq.replace("\n","").replace(" ","")))    
           i+=1
@@ -2317,7 +2656,7 @@ else:
             if ("non-LTR" in name) or ("non LTR" in name):
                 k=fastanamesrandom2.index(name)
                 entry1=fastalinesrandom2[k]
-                entry2=fastalinesrandom2[k]
+                entry2=fastalinesrandom2[k]                
                 dnaseq=""
                 for m in range(entry1+1,entry2):
                    dnaseq+=linecache.getline("knowns2.fasta",m)
@@ -2328,11 +2667,12 @@ else:
       print "Number of non-LTR's detected:",len(nonLTRs)
       # Removing temporary files
       #os.remove("itspLTRnonLTR_" + "library_" + nameofg + ".fasta")
-      
+      os.system("mkdir LTR nonLTR")
+      os.chdir("LTR")
       # Differentiating between gypsy and copia retroelements
       
       i=1
-      for row in open(os.path.join("../LTRharvest", "library_" + nameofg + ".fasta"), "r"):
+      for row in open(os.path.join("../../../LTRharvest", "library_" + nameofg + ".fasta"), "r"):
        if row.startswith(">") == True:
            fastanames.append(row[1:])
            fastalines.append(i)
@@ -2349,7 +2689,7 @@ else:
               entry2=fastalines[k+1]
               dnaseq=""
               for m in range(entry1+1,entry2):
-                 dnaseq+=linecache.getline(filename1,m).upper()
+                 dnaseq+=linecache.getline("../../../LTRharvest/" + "library_" + nameofg + ".fasta",m).upper()
               dnaseq=dnaseq.replace("\n","").replace(" ","")
               xyz.write("%s%s\n%s\n" %(">",name.replace("\n",""),dnaseq))
       xyz.close()
@@ -2513,7 +2853,7 @@ else:
       fastanames3=[]
       fastalines3=[]
       i=1
-      for row in open("querydataset.fa",'r'): # Can give all_plantupdated.ref
+      for row in open("querydataset.fa",'r'):
         if row.startswith(">") == True:
               fastanames3.append(row[1:])
               fastalines3.append(i)
@@ -2597,11 +2937,25 @@ else:
       
       # Removing temporary files
       #os.remove("itspgypsycopia_" + "library_" + nameofg + ".fasta")
+      fastanames4=[]
+      fastalines4=[]
+      i=1
+      for row in open(os.path.join("../", "unknownLTRs.fasta"), "r"):
+        if row.startswith(">") == True:
+              fastanames4.append(row[1:])
+              fastalines4.append(i)
+        i+=1
+      fastalines4.append(i)      
 
       if accuracy_score(referencenames, referencepredict) < minacc:
          print "Accuracy is less than minimum desired accuracy between Gypsy and Copia retroelements:",minacc
-         for repclass in referencepredict:
-             repeatclassification[repmods]=[fastanames4[i],"LTR"]
+         for name in fastanames4:
+             try:
+               repeatclassification[repmods]=[name,"LTR"]
+             except IndexError:
+               print "List Index exceeded LTR:",repmods+1
+               repmods+=1
+               break
              repmods+=1
       else:      
          referencedata=np.zeros((1024,len(fastanames4))) # 4096 for hexanucleotides
@@ -2612,7 +2966,7 @@ else:
              entry2=fastalines4[k+1]
              dnaseq=""
              for n in range(entry1+1,entry2):
-                dnaseq+=linecache.getline("unknownLTRs.fasta",n)
+                dnaseq+=linecache.getline("../unknownLTRs.fasta",n)
              dnaseq=dnaseq.replace("\n","").replace(" ","") 
              i+=1
              j=-1
@@ -2628,16 +2982,34 @@ else:
          clf = svm.SVC(gamma=0.0070, C=5)
          clf.fit(querydata, querynames)
          referencepredict=clf.predict(referencedata)
-         
+         i=0
          for repclass in referencepredict:
              if repclass=="Gypsy":
-                repeatclassification[repmods]=[fastanames4[i],"Gypsy"]
+                try:
+                   repeatclassification[repmods]=[fastanames4[i],"Gypsy"]
+                except IndexError:
+                   print "List Index exceeded Gypsy:",repmods+1
+                   repmods+=1
+                   break
                 repmods+=1
              elif repclass=="Copia":
-                repeatclassification[repmods]=[fastanames4[i],"Copia"]
+                try:
+                   repeatclassification[repmods]=[fastanames4[i],"Copia"]
+                except IndexError:
+                   print "List Index exceeded Copia:",repmods+1
+                   repmods+=1
+                   break
                 repmods+=1
+             i+=1   
          
       # Determining LINE and SINE elements
+      os.chdir("../nonLTR")
+      for row in open(os.path.join("../../../LTRharvest", "library_" + nameofg + ".fasta"), "r"):
+       if row.startswith(">") == True:
+           fastanames.append(row[1:])
+           fastalines.append(i)
+       i+=1
+      fastalines.append(i)
       
       with open("itspLINESINE_" + "library_" + nameofg + ".fasta",'w') as xyz:
        for name in fastanames:
@@ -2649,7 +3021,7 @@ else:
               entry2=fastalines[k+1]
               dnaseq=""
               for m in range(entry1+1,entry2):
-                 dnaseq+=linecache.getline(filename1,m).upper()))
+                 dnaseq+=linecache.getline("../../../LTRharvest/" + "library_" + nameofg + ".fasta",m).upper()
               dnaseq=dnaseq.replace("\n","").replace(" ","")
               xyz.write("%s%s\n%s\n" %(">",name.replace("\n",""),dnaseq))
       xyz.close()
@@ -2898,10 +3270,24 @@ else:
       # Removing temporary files
       #os.remove("itspLINESINE_" + "library_" + nameofg + ".fasta")
       #os.remove("knowns2.fasta")
+      fastanames4=[]
+      fastalines4=[]
+      i=1
+      for row in open(os.path.join("../", "unknownnonLTRs.fasta"), "r"):
+        if row.startswith(">") == True:
+              fastanames4.append(row[1:])
+              fastalines4.append(i)
+        i+=1
+      fastalines4.append(i)      
       if accuracy_score(referencenames, referencepredict) < minacc:
          print "Accuracy is less than minimum desired accuracy between DNA and retrotransposons:",minacc
-         for repclass in referencepredict:
-             repeatclassification[repmods]=[fastanames4[i],"non-LTR"]
+         for name in fastanames4:
+             try:
+               repeatclassification[repmods]=[name,"non-LTR"]
+             except IndexError:
+               print "List Index exceeded non-LTR:",repmods+1
+               repmods+=1
+               break
              repmods+=1
       else:      
          referencedata=np.zeros((1024,len(fastanames4))) # 4096 for hexanucleotides
@@ -2912,7 +3298,7 @@ else:
              entry2=fastalines4[k+1]
              dnaseq=""
              for n in range(entry1+1,entry2):
-                dnaseq+=linecache.getline("unknownLTRs.fasta",n)
+                dnaseq+=linecache.getline("../unknownnonLTRs.fasta",n)
              dnaseq=dnaseq.replace("\n","").replace(" ","") 
              i+=1
              j=-1
@@ -2928,16 +3314,29 @@ else:
          clf = svm.SVC(gamma=0.0070, C=5)
          clf.fit(querydata, querynames)
          referencepredict=clf.predict(referencedata)
-         
+
+         i=0
          for repclass in referencepredict:
              if repclass=="LINE":
-                repeatclassification[repmods]=[fastanames4[i],"LINE"]
+                try:
+                  repeatclassification[repmods]=[fastanames4[i],"LINE"]
+                except IndexError:
+                  print "List Index exceeded LINE:",repmods+1
+                  repmods+=1
+                  break
                 repmods+=1
              elif repclass=="SINE":
-                repeatclassification[repmods]=[fastanames4[i],"SINE"]
+                try:
+                  repeatclassification[repmods]=[fastanames4[i],"SINE"]
+                except IndexError:
+                  print "List Index exceeded SINE:",repmods+1
+                  repmods+=1
+                  break
                 repmods+=1
-         
-# Adding repeats classified using machine learning into repeat library files and genome gff files  
+             i+=1
+             
+# Adding repeats classified using machine learning into repeat library files and genome gff files
+os.chdir("../../")
 
 with open("library_" + nameofg + "_ML_.fasta",'w') as xyz:
   for row in open(os.path.join("../LTRharvest", "library_" + nameofg + ".fasta"), "r"):
@@ -2987,3 +3386,71 @@ with open(nameofg + "full_ML_final8080.gff",'w') as xyz:
         else:
             xyz.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%s%s%s\n" %(line2[0],line2[1],line2[2],line2[3],line2[4],line2[5],line2[6],line2[7],repelement," (",newannot,afterwards.replace("\n","")))
 xyz.close()
+
+os.chdir("..")
+
+if path == None:
+   filename5=open(filename1,"r")
+else:
+   filename5=open(os.path.join(path, filename1), "r")
+
+with open("genomestatistics.txt",'w') as xyz:
+   fastalines=[]
+   i=1
+   scaffoldnum=0
+   for row in filename5:
+    if row.startswith(">") == True:
+        fastalines.append(i)
+        scaffoldnum+=1 
+    i+=1  
+   fastalines.append(i+1)
+   filename5.close()
+
+   if path == None:
+      filename6=filename1
+   else:
+      if path[len(path)-1]=="/":
+                filename6=path + filename1
+      else:
+                filename6=path + "/" + filename1
+                
+   length2=0
+   lengths=np.zeros(scaffoldnum)
+   for i in range(scaffoldnum):
+     entry1=fastalines[i]
+     entry2=fastalines[i+1]
+     sequence=""
+     for m in range(entry1+1,entry2):
+        sequence+=linecache.getline(filename6,m)
+     abc=Counter(sequence)
+     A=abc['A']
+     T=abc['T']
+     G=abc['G']
+     C=abc['C']
+     a=abc['a']
+     t=abc['t']
+     g=abc['g']
+     c=abc['c']
+     ATGC= A + T + G + C + a + t + g + c 
+     length2+=ATGC
+     lengths[i]=ATGC
+   
+   xyz.write("%s%s\n" %("Name of genome:",nameofg))
+   xyz.write("%s%s\n" %("Length of genome is:",length2))
+   xyz.write("%s%s\n" %("Number of scaffolds is:",scaffoldnum))
+   xyz.write("%s%s\n" %("Average length of scaffolds is:",length2/scaffoldnum))
+   
+   # Calculating N50
+   lengths=np.sort(lengths) # Arranging in ascending order
+   lengths=lengths[::-1] # Arranging it now in reverse order i.e descending order
+   temp=0
+   for i in range(scaffoldnum):
+      temp+=lengths[i]
+      if temp>=length2/2:
+         xyz.write("%s%s\n" %("The N50 value for this assembly is:",lengths[i]))
+         break
+xyz.close()
+
+# Estimating percentage of repetitive elements
+analyzegff(nameofg + "partial_ML_final0000.gff",length2,"ML",nameofg) # Full + partial length repeat elements
+analyzegff(nameofg + "full_ML_final8080.gff",length2,"ML",nameofg) # Full length repeat elements
