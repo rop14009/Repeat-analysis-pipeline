@@ -14,20 +14,37 @@ python repeatpipeline.py {options}
 Options: 
 
 --fasta = The genome fasta file
+
 --name'= The name of genome (optional)
+
 --pog'= Percentage of genome for de novo repeat detection, please give whole numbers (optional)
+
 --path = Path to input files [Not needed if genome file in same directory as this script]
+
 --cpus = Number of CPU's (optional)
+
 --denovolib = De novo repeat library. If specified, repeatmodeler is skipped
+
 --denovolibpath = Path to de novo repeat library. If not specified, it assumes the same path as for the repbase file
+
 --LTRharvest = Type 0 to skip running LTR harvest
+
 --interproscan = Type 0 to skip running interproscan
+
 --minlength = Minimum length to be considered as full-length (default 80bp)
+
 --minidentity = Minimum percent identity (0 to 100) to be considered as full-length (default 80%)
+
 --minaccuracy = Minimum accuracy for machine learning results to be incorporated into final results (Enter value from 0 to 100, default value=95.0)
+
 --LTRharvestpath = Path to LTR harvest (optional)
+
 --interproscanpath = Path to interproscan (optional)
+
 --getorfpath = Path to getorf (optional)
+
 --interproscanstandalone = Directory for interproscan (optional)
+
 --repbase = Reference database (from repbase) (optional)
+
 --repbasepath = Path to reference database, by default it assumes the location of this script (optional)
